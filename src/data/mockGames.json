@@ -1,0 +1,26 @@
+[
+  {
+    "id": "g1",
+    "title": "The Legend of Zelda: Breath of the Wild",
+    "coverImage": "https://images.igdb.com/igdb/image/upload/t_cover_big/co3p2d.png",
+    "developer": "Nintendo EPD",
+    "releaseDate": "2017-03-03",
+    "genres": ["Action", "Adventure", "RPG"]
+  },
+  {
+    "id": "g2",
+    "title": "Red Dead Redemption 2",
+    "coverImage": "https://images.igdb.com/igdb/image/upload/t_cover_big/co1q1f.png",
+    "developer": "Rockstar Games",
+    "releaseDate": "2018-10-26",
+    "genres": ["Action", "Adventure"]
+  },
+  {
+    "id": "g3",
+    "title": "Elden Ring",
+    "coverImage": "https://images.igdb.com/igdb/image/upload/t_cover_big/co4jni.png",
+    "developer": "FromSoftware",
+    "releaseDate": "2022-02-25",
+    "genres": ["RPG", "Action"]
+  }
+]

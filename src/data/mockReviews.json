@@ -1,0 +1,28 @@
+[
+  {
+    "id": "r1",
+    "gameId": "g1",
+    "status": "Completed",
+    "aspectRatings": [
+      { "aspect": "Story", "score": 8 },
+      { "aspect": "Gameplay", "score": 10 },
+      { "aspect": "Visual", "score": 9 },
+      { "aspect": "Music", "score": 10 }
+    ],
+    "overallRating": 9.2,
+    "content": "Game open-world terbaik yang pernah dimainin. Eksplorasinya kerasa bebas banget, mechanic fisika-nya juara.",
+    "dateAdded": "2026-08-15"
+  },
+  {
+    "id": "r2",
+    "gameId": "g3",
+    "status": "Playing",
+    "aspectRatings": [
+      { "aspect": "Gameplay", "score": 10 },
+      { "aspect": "Visual", "score": 9 }
+    ],
+    "overallRating": 9.5,
+    "content": "Susah banget boss pertamanya, tapi sistem combat-nya nagih!",
+    "dateAdded": "2026-08-25"
+  }
+]
