@@ -1,19 +1,14 @@
 import type { Review } from '../types';
 
-// Mendefinisikan tipe data untuk props yang diterima komponen ini
 interface ReviewCardProps {
   review: Review;
+  onDelete?: (id: string) => void;
+  onEdit?: (review: Review) => void; // <--- Fungsi Edit
 }
 
-export default function ReviewCard({ review }: ReviewCardProps) {
-  // Helper untuk format tanggal biar rapi
-  const formattedDate = new Date(review.dateAdded).toLocaleDateString('id-ID', { 
-    day: 'numeric', 
-    month: 'long', 
-    year: 'numeric' 
-  });
+export default function ReviewCard({ review, onDelete, onEdit }: ReviewCardProps) {
+  const formattedDate = new Date(review.dateAdded).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  // Helper untuk warna badge status
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Completed': return 'bg-green-100 text-green-700';
@@ -25,8 +20,23 @@ export default function ReviewCard({ review }: ReviewCardProps) {
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md">
-      <div className="flex justify-between items-start mb-4">
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 transition-all hover:shadow-md relative group">
+      
+      {/* Tombol Aksi Kanan Atas */}
+      <div className="absolute top-6 right-6 flex gap-2">
+        {onEdit && (
+          <button onClick={() => onEdit(review)} className="text-slate-300 hover:text-blue-500 transition-colors bg-white rounded-md p-1" title="Edit Jurnal">
+            ✏️
+          </button>
+        )}
+        {onDelete && (
+          <button onClick={() => onDelete(review.id)} className="text-slate-300 hover:text-red-500 transition-colors bg-white rounded-md p-1" title="Hapus Jurnal">
+            🗑️
+          </button>
+        )}
+      </div>
+
+      <div className="flex justify-between items-start mb-4 pr-16">
         <div>
           <span className={`inline-block px-3 py-1 text-sm font-bold rounded-lg mb-2 ${getStatusColor(review.status)}`}>
             {review.status}
@@ -39,9 +49,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
         </div>
       </div>
       
-      <p className="text-slate-700 leading-relaxed mb-6">
-        {review.content}
-      </p>
+      <p className="text-slate-700 leading-relaxed mb-6">{review.content}</p>
       
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-slate-50">
         {review.aspectRatings.map((aspect) => (
