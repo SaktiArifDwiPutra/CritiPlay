@@ -1,71 +1,50 @@
 import type { Review } from '../types';
-import mockReviews from '../data/mockReviews.json';
+import { authService } from './authService';
 
-const STORAGE_KEY = 'critiplay_reviews';
+const API_URL = 'http://127.0.0.1:8000/api';
 
-const getStoredReviews = (): Review[] => {
-  const storedData = localStorage.getItem(STORAGE_KEY);
-  if (storedData) return JSON.parse(storedData);
-  
-  const initialData = mockReviews as Review[];
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
-  return initialData;
-};
+const getHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'Authorization': `Bearer ${authService.getToken()}`
+});
 
 export const reviewService = {
   getReviewsByGameId: async (gameId: string): Promise<Review[]> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const filtered = getStoredReviews().filter((r) => r.gameId === gameId);
-        filtered.sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime());
-        resolve(filtered);
-      }, 400);
-    });
+    const response = await fetch(`${API_URL}/games/${gameId}/reviews`, { headers: getHeaders() });
+    if (!response.ok) return [];
+    return response.json();
   },
+
   saveReview: async (newReview: Review): Promise<Review> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const allReviews = getStoredReviews();
-        allReviews.push(newReview);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(allReviews));
-        resolve(newReview);
-      }, 300);
+    const response = await fetch(`${API_URL}/reviews`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(newReview)
     });
+    const data = await response.json();
+    return { ...newReview, id: data.id };
   },
-  // === FITUR BARU V3 ===
+
   updateReview: async (id: string, updatedData: Partial<Review>): Promise<Review | undefined> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const allReviews = getStoredReviews();
-        const index = allReviews.findIndex(r => r.id === id);
-        if (index !== -1) {
-          allReviews[index] = { ...allReviews[index], ...updatedData };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(allReviews));
-          resolve(allReviews[index]);
-        } else {
-          resolve(undefined);
-        }
-      }, 300);
+    const response = await fetch(`${API_URL}/reviews/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updatedData)
     });
+    if (!response.ok) return undefined;
+    return { id, ...updatedData } as Review;
   },
+
   deleteReview: async (id: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        let allReviews = getStoredReviews();
-        allReviews = allReviews.filter(r => r.id !== id);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(allReviews));
-        resolve(true);
-      }, 300);
+    const response = await fetch(`${API_URL}/reviews/${id}`, { 
+      method: 'DELETE',
+      headers: getHeaders()
     });
+    return response.ok;
   },
-  deleteReviewsByGameId: async (gameId: string): Promise<void> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        let allReviews = getStoredReviews();
-        allReviews = allReviews.filter(r => r.gameId !== gameId);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(allReviews));
-        resolve();
-      }, 300);
-    });
+
+  deleteReviewsByGameId: async (_gameId: string): Promise<void> => {
+    return Promise.resolve();
   }
 };

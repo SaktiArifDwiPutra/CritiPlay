@@ -1,63 +1,54 @@
 import type { Game } from '../types';
-import mockGames from '../data/mockGames.json';
+import { authService } from './authService'; // Import authService
 
-const STORAGE_KEY = 'critiplay_games';
+const API_URL = 'http://127.0.0.1:8000/api/games';
 
-const getStoredGames = (): Game[] => {
-  const storedData = localStorage.getItem(STORAGE_KEY);
-  if (storedData) return JSON.parse(storedData);
-  
-  const initialData = mockGames as Game[];
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
-  return initialData;
-};
+// Fungsi untuk menyelipkan Token di setiap request
+const getHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'Authorization': `Bearer ${authService.getToken()}`
+});
 
 export const gameService = {
   getAllGames: async (): Promise<Game[]> => {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(getStoredGames().reverse()), 500);
-    });
+    const response = await fetch(API_URL, { headers: getHeaders() });
+    // Jika token tidak valid / ditolak, kembalikan array kosong agar React tidak crash
+    if (!response.ok) return []; 
+    return response.json();
   },
+
   getGameById: async (id: string): Promise<Game | undefined> => {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(getStoredGames().find((g) => g.id === id)), 500);
-    });
+    const response = await fetch(`${API_URL}/${id}`, { headers: getHeaders() });
+    if (!response.ok) return undefined;
+    return response.json();
   },
+
   addGame: async (newGameData: Omit<Game, 'id'>): Promise<Game> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const games = getStoredGames();
-        const newGame: Game = { ...newGameData, id: `g${Date.now()}` };
-        games.push(newGame);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
-        resolve(newGame);
-      }, 400);
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(newGameData)
     });
+    const data = await response.json();
+    return { ...newGameData, id: data.id }; 
   },
-  // === FITUR BARU V3 ===
+
   updateGame: async (id: string, updatedData: Partial<Game>): Promise<Game | undefined> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const games = getStoredGames();
-        const index = games.findIndex(g => g.id === id);
-        if (index !== -1) {
-          games[index] = { ...games[index], ...updatedData };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
-          resolve(games[index]);
-        } else {
-          resolve(undefined);
-        }
-      }, 400);
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(updatedData)
     });
+    if (!response.ok) return undefined;
+    return { id, ...updatedData } as Game;
   },
+
   deleteGame: async (id: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        let games = getStoredGames();
-        games = games.filter(g => g.id !== id);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
-        resolve(true);
-      }, 400);
+    const response = await fetch(`${API_URL}/${id}`, { 
+      method: 'DELETE',
+      headers: getHeaders()
     });
+    return response.ok;
   }
 };
