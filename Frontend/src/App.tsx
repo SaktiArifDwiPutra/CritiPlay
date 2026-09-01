@@ -6,6 +6,8 @@ import AuthPage from './pages/AuthPage';
 import ProfilePage from './pages/ProfilePage';
 import Navbar from './components/Navbar';
 import { authService } from './services/authService';
+import AdminDashboard from './pages/AdminDashboard';
+import GoogleCallback from './pages/GoogleCallback';
 
 // 2. Modifikasi ProtectedRoute untuk membungkus halaman dengan Navbar
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
@@ -35,6 +37,8 @@ export default function App() {
           <Route path="/game/:id" element={<ProtectedRoute><GameDetail /></ProtectedRoute>} />
           <Route path="/stats" element={<ProtectedRoute><Statistics /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/google-callback" element={<GoogleCallback />} />
         </Routes>
       </div>
     </BrowserRouter>

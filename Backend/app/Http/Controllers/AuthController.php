@@ -69,6 +69,7 @@ public function profile(Request $request)
         'id' => $user->id,
         'name' => $user->name,
         'email' => $user->email,
+        'role' => $user->role,
         'avatar' => $user->avatar ? asset('storage/' . $user->avatar) : null
     ]);
 }
@@ -80,7 +81,7 @@ public function updateProfile(Request $request)
     $request->validate([
         'name' => 'required|string|max:255',
         'email' => 'required|email|unique:users,email,' . $user->id,
-        'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048' // Maksimal 2MB
+        'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
     ]);
 
     $user->name = $request->input('name');
@@ -105,6 +106,7 @@ public function updateProfile(Request $request)
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
+            'role' => $user->role,
             'avatar' => $user->avatar ? asset('storage/' . $user->avatar) : null
         ]
     ]);

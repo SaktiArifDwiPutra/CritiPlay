@@ -4,13 +4,17 @@ import { authService } from '../services/authService';
 
 export default function Navbar() {
   const [userName, setUserName] = useState('');
+  const [userRole, setUserRole] = useState('user');
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const user = await authService.getProfile();
-        if (user) setUserName(user.name);
+        if (user) {
+          setUserName(user.name);
+          setUserRole(user.role); 
+        }
       } catch (error) {
         console.error(error);
       }
@@ -29,7 +33,14 @@ export default function Navbar() {
         <Link to="/" className="text-2xl font-extrabold text-blue-600 tracking-tight">
           CritiPlay
         </Link>
-        
+        {userRole === 'admin' && (
+          <>
+            <Link to="/admin" className="text-purple-600 hover:text-purple-800 font-bold text-sm transition-colors hidden sm:inline-block">
+              Admin Panel
+            </Link>
+            <span className="text-slate-300 hidden sm:inline-block">|</span>
+          </>
+        )}
         <div className="flex items-center gap-4">
             <Link to="/profile" className="text-slate-600 hover:text-blue-600 font-medium text-sm transition-colors hidden sm:inline-block">
                 Profil
