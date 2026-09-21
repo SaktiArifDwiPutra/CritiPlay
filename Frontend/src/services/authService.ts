@@ -84,6 +84,54 @@ export const authService = {
     return data.user;
   },
 
+  forgotPassword: async (email: string) => {
+  const response = await fetch(`${API_URL}/forgot-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({ email })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Gagal mengirim link reset password');
+  }
+
+  return data;
+},
+
+resetPassword: async (
+  token: string,
+  email: string,
+  password: string,
+  passwordConfirmation: string
+) => {
+  const response = await fetch(`${API_URL}/reset-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+      token,
+      email,
+      password,
+      password_confirmation: passwordConfirmation
+    })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Gagal mereset password');
+  }
+
+  return data;
+},
+
   logout: async () => {
     const token = authService.getToken();
     if (token) {

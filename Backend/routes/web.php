@@ -7,4 +7,11 @@ use App\Http\Controllers\SocialAuthController;
 Route::middleware(['web'])->group(function () {
     Route::get('/auth/google/redirect', [SocialAuthController::class, 'redirect']);
     Route::get('/auth/google/callback', [SocialAuthController::class, 'callback']);
+
+    Route::get('/reset-password/{token}', function ($token) {
+    return response()->json([
+        'message' => 'Reset password page',
+        'token' => $token,
+    ]);
+})->name('password.reset');
 });

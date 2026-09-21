@@ -133,4 +133,31 @@ public function forgotPassword(Request $request)
         'message' => 'Email tidak ditemukan.'
     ], 404);
 }
+
+public function resetPassword(Request $request)
+{
+    $request->validate([
+        'token' => 'required',
+        'email' => 'required|email',
+        'password' => 'required|string|min:6|confirmed',
+    ]);
+
+    $status = Password::reset(
+        $request->only('email', 'password', 'password_confirmation', 'token'),
+        function ($user, $password) {
+            $user->password = Hash::make($password);
+            $user->save();
+        }
+    );
+
+    if ($status === Password::PASSWORD_RESET) {
+        return response()->json([
+            'message' => 'Password berhasil direset.'
+        ]);
+    }
+
+    return response()->json([
+        'message' => 'Token reset password tidak valid atau sudah kedaluwarsa.'
+    ], 400);
+}
 }

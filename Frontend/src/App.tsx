@@ -8,6 +8,8 @@ import Navbar from './components/Navbar';
 import { authService } from './services/authService';
 import AdminDashboard from './pages/AdminDashboard';
 import GoogleCallback from './pages/GoogleCallback';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 // 2. Modifikasi ProtectedRoute untuk membungkus halaman dengan Navbar
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
@@ -39,6 +41,8 @@ export default function App() {
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
           <Route path="/google-callback" element={<GoogleCallback />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
         </Routes>
       </div>
     </BrowserRouter>
