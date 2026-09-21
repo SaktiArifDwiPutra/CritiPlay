@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 
 
@@ -112,5 +113,24 @@ public function updateProfile(Request $request)
     ]);
 }
 
+public function forgotPassword(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email',
+    ]);
 
+    $status = Password::sendResetLink(
+        $request->only('email')
+    );
+
+    if ($status === Password::RESET_LINK_SENT) {
+        return response()->json([
+            'message' => 'Link reset password berhasil dibuat.'
+        ]);
+    }
+
+    return response()->json([
+        'message' => 'Email tidak ditemukan.'
+    ], 404);
+}
 }
