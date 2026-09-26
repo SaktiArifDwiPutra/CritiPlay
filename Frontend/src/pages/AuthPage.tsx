@@ -84,6 +84,19 @@ export default function AuthPage() {
               type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6}
               className="w-full border border-slate-200 rounded-xl p-3 bg-slate-50 outline-none focus:border-blue-500" 
             />
+
+<div className="flex justify-end -mt-2">
+  {isLoginMode && (
+    <button
+      type="button"
+      onClick={() => navigate('/forgot-password')}
+      className="text-sm font-semibold text-blue-600 hover:underline"
+    >
+      Lupa password?
+    </button>
+  )}
+</div>
+
           </div>
 
           <button 

@@ -7,4 +7,5 @@ use App\Http\Controllers\SocialAuthController;
 Route::middleware(['web'])->group(function () {
     Route::get('/auth/google/redirect', [SocialAuthController::class, 'redirect']);
     Route::get('/auth/google/callback', [SocialAuthController::class, 'callback']);
+
 });
