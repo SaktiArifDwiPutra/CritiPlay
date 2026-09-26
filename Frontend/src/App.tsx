@@ -10,6 +10,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import GoogleCallback from './pages/GoogleCallback';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import VerifyOtp from './pages/VerifyOtp';
 
 // 2. Modifikasi ProtectedRoute untuk membungkus halaman dengan Navbar
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="/google-callback" element={<GoogleCallback />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/verify-otp" element={<VerifyOtp />} />
         </Routes>
       </div>
     </BrowserRouter>

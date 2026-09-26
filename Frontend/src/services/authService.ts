@@ -32,57 +32,73 @@ export const authService = {
     });
 
     if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.message || 'Gagal memperbarui profil');
-    }
+  const errData = await response.json();
+
+  const error = new Error(
+    errData.message || 'Login gagal'
+  ) as Error & { status?: number };
+
+  error.status = response.status;
+
+  throw error;
+}
     return response.json();
   },
 
   login: async (email: string, password: string) => {
-    const response = await fetch(`${API_URL}/login`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({ email, password })
-    });
-    
-    if (!response.ok) {
-      const errData = await response.json();
-      // Tangkap pesan error asli dari Laravel
-      throw new Error(errData.message || 'Login gagal');
-    }
-    
-    const data = await response.json();
-    authService.setToken(data.token);
-    return data.user;
-  },
+  const response = await fetch(`${API_URL}/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const error = new Error(
+      data.message || 'Login gagal'
+    ) as Error & { status?: number };
+
+    error.status = response.status;
+
+    throw error;
+  }
+
+  authService.setToken(data.token);
+  return data.user;
+},
 
   register: async (name: string, email: string, password: string) => {
-    const response = await fetch(`${API_URL}/register`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({ name, email, password })
-    });
-    
-    if (!response.ok) {
-      const errData = await response.json();
-      // Laravel biasanya menaruh detail error validasi di object "errors"
-      if (errData.errors) {
-        const firstError = Object.values(errData.errors)[0] as string[];
-        throw new Error(firstError[0]); // Tampilkan error pertama (misal: "The password must be at least 6 characters")
-      }
-      throw new Error(errData.message || 'Gagal mendaftar');
+  const response = await fetch(`${API_URL}/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+      name,
+      email,
+      password,
+      password_confirmation: password
+    })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    if (data.errors) {
+      const firstError = Object.values(data.errors)[0] as string[];
+      throw new Error(firstError[0]);
     }
-    
-    const data = await response.json();
-    authService.setToken(data.token);
-    return data.user;
-  },
+
+    throw new Error(data.message || 'Gagal mendaftar');
+  }
+
+  return data;
+},
 
   forgotPassword: async (email: string) => {
   const response = await fetch(`${API_URL}/forgot-password`, {
@@ -127,6 +143,51 @@ resetPassword: async (
 
   if (!response.ok) {
     throw new Error(data.message || 'Gagal mereset password');
+  }
+
+  return data;
+},
+
+verifyOtp: async (email: string, otp: string) => {
+  const response = await fetch(`${API_URL}/verify-otp`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({
+      email,
+      otp,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Verifikasi OTP gagal');
+  }
+
+  authService.setToken(data.token);
+
+  return data.user;
+},
+
+resendOtp: async (email: string) => {
+  const response = await fetch(`${API_URL}/resend-otp`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({
+      email,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Gagal mengirim ulang OTP');
   }
 
   return data;

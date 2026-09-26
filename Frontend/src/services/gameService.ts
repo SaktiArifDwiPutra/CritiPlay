@@ -24,6 +24,12 @@ export const gameService = {
     return response.json();
   },
 
+  searchGames: async (query: string): Promise<Game[]> => {
+    console.log('Searching game:', query);
+
+    return [];
+  },
+
   addGame: async (newGameData: Omit<Game, 'id'>): Promise<Game> => {
     const response = await fetch(API_URL, {
       method: 'POST',

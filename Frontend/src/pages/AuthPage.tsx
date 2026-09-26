@@ -20,28 +20,36 @@ export default function AuthPage() {
     }
   }, [searchParams]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
+  setIsLoading(true);
 
-    try {
-      if (isLoginMode) {
-        await authService.login(email, password);
-      } else {
-        await authService.register(name, email, password);
-      }
+  try {
+    if (isLoginMode) {
+      await authService.login(email, password);
       navigate('/');
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Terjadi kesalahan. Silakan coba lagi.');
-      }
-    } finally {
-      setIsLoading(false);
+    } else {
+      await authService.register(name, email, password);
+      navigate(`/verify-otp?email=${encodeURIComponent(email)}`);
     }
-  };
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      const status = (err as Error & { status?: number }).status;
+
+      if (status === 403 && isLoginMode) {
+        navigate(`/verify-otp?email=${encodeURIComponent(email)}`);
+        return;
+      }
+
+      setError(err.message);
+    } else {
+      setError('Terjadi kesalahan. Silakan coba lagi.');
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center">
