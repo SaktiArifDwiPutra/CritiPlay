@@ -30,4 +30,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
     Route::get('/users', [AdminController::class, 'getAllUsers']);
 });
+
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+    Route::post('/resend-otp', [AuthController::class, 'resendOtp'])->middleware('throttle:3,1');
+
 });
