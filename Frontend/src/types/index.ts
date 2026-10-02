@@ -34,14 +34,20 @@ export interface Review {
   id: string;
   gameId: string;
   userId: string;
+
   name: string;
   avatar: string | null;
+
   ratingGameplay: number;
   ratingStory: number;
   ratingVisual: number;
   ratingOverall: number;
+
   reviewText: string | null;
   dateAdded: string;
+
+  helpfulCount: number;
+  isHelpfulByMe: boolean;
 }
 
 export interface SearchUser {

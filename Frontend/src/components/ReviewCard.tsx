@@ -31,17 +31,16 @@ export default function ReviewCard({
               className="flex items-center gap-3 text-left group"
             >
               <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold overflow-hidden shrink-0">
-                {review.avatar ? (
-                  <img
-                    src={`http://127.0.0.1:8000/storage/${review.avatar}`}
-                    alt={review.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  review.name?.charAt(0).toUpperCase() ?? 'U'
-                )}
-              </div>
-
+            {review.avatar ? (
+              <img
+                src={review.avatar}
+                alt={review.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              review.name?.charAt(0).toUpperCase() ?? 'U'
+            )}
+            </div>
               <div>
                 <p className="font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
                   {review.name}
