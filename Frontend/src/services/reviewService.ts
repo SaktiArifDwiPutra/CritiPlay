@@ -1,21 +1,9 @@
-import type { Review } from '../types';
-import { authService } from './authService';
+import type {
+  Review,
+  ReviewDiscussion
+} from '../types';
 
-interface ReviewApiResponse {
-  id: string | number;
-  gameId: string | number;
-  userId: string | number;
-  userName: string | null;
-  userAvatar: string | null;
-  ratingGameplay: number | string;
-  ratingStory: number | string;
-  ratingVisual: number | string;
-  ratingOverall: number | string;
-  reviewText: string | null;
-  helpfulCount: number | string;
-  isHelpfulByMe: boolean;
-  dateAdded: string;
-}
+import { authService } from './authService';
 
 const API_URL = 'http://127.0.0.1:8000/api';
 
@@ -26,7 +14,10 @@ const getHeaders = () => ({
 });
 
 export const reviewService = {
-  getReviewsByGameId: async (gameId: string): Promise<Review[]> => {
+
+  getReviewsByGameId: async (
+    gameId: string
+  ): Promise<Review[]> => {
     const response = await fetch(
       `${API_URL}/games/${gameId}/reviews`,
       {
@@ -40,27 +31,17 @@ export const reviewService = {
 
     const data = await response.json();
 
-    return data.map((review: ReviewApiResponse) => ({
-      id: String(review.id),
-      gameId: String(review.gameId),
-      userId: String(review.userId),
-
-      // Backend sekarang pakai userName / userAvatar
-      name: review.userName ?? 'Unknown',
-      avatar: review.userAvatar ?? null,
-
+    return data.map((review: Review) => ({
+      ...review,
       ratingGameplay: Number(review.ratingGameplay),
       ratingStory: Number(review.ratingStory),
       ratingVisual: Number(review.ratingVisual),
       ratingOverall: Number(review.ratingOverall),
-
-      reviewText: review.reviewText,
-      dateAdded: review.dateAdded,
-
-      helpfulCount: Number(review.helpfulCount ?? 0),
+      helpfulCount: Number(review.helpfulCount),
       isHelpfulByMe: Boolean(review.isHelpfulByMe)
     }));
   },
+
 
   saveReview: async (
     gameId: string,
@@ -69,24 +50,30 @@ export const reviewService = {
     ratingVisual: number,
     reviewText: string
   ): Promise<void> => {
-    const response = await fetch(`${API_URL}/reviews`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({
-        game_id: gameId,
-        rating_gameplay: ratingGameplay,
-        rating_story: ratingStory,
-        rating_visual: ratingVisual,
-        review_text: reviewText
-      })
-    });
+    const response = await fetch(
+      `${API_URL}/reviews`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          game_id: gameId,
+          rating_gameplay: ratingGameplay,
+          rating_story: ratingStory,
+          rating_visual: ratingVisual,
+          review_text: reviewText
+        })
+      }
+    );
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || 'Gagal menyimpan review');
+      throw new Error(
+        data.message || 'Gagal menyimpan review'
+      );
     }
   },
+
 
   updateReview: async (
     id: string,
@@ -95,29 +82,129 @@ export const reviewService = {
     ratingVisual: number,
     reviewText: string
   ): Promise<void> => {
-    const response = await fetch(`${API_URL}/reviews/${id}`, {
-      method: 'PUT',
-      headers: getHeaders(),
-      body: JSON.stringify({
-        rating_gameplay: ratingGameplay,
-        rating_story: ratingStory,
-        rating_visual: ratingVisual,
-        review_text: reviewText
-      })
-    });
+    const response = await fetch(
+      `${API_URL}/reviews/${id}`,
+      {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          rating_gameplay: ratingGameplay,
+          rating_story: ratingStory,
+          rating_visual: ratingVisual,
+          review_text: reviewText
+        })
+      }
+    );
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || 'Gagal mengupdate review');
+      throw new Error(
+        data.message || 'Gagal mengupdate review'
+      );
     }
   },
 
-  deleteReview: async (id: string): Promise<boolean> => {
-    const response = await fetch(`${API_URL}/reviews/${id}`, {
-      method: 'DELETE',
-      headers: getHeaders()
-    });
+
+  deleteReview: async (
+    id: string
+  ): Promise<boolean> => {
+    const response = await fetch(
+      `${API_URL}/reviews/${id}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders()
+      }
+    );
+
+    return response.ok;
+  },
+
+
+  toggleHelpful: async (
+    reviewId: string
+  ): Promise<{
+    isHelpful: boolean;
+    helpfulCount: number;
+  }> => {
+    const response = await fetch(
+      `${API_URL}/reviews/${reviewId}/helpful`,
+      {
+        method: 'POST',
+        headers: getHeaders()
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || 'Gagal mengubah helpful'
+      );
+    }
+
+    return {
+      isHelpful: data.is_helpful,
+      helpfulCount: data.helpful_count
+    };
+  },
+
+
+  getDiscussions: async (
+    reviewId: string
+  ): Promise<ReviewDiscussion[]> => {
+    const response = await fetch(
+      `${API_URL}/reviews/${reviewId}/discussions`,
+      {
+        headers: getHeaders()
+      }
+    );
+
+    if (!response.ok) {
+      return [];
+    }
+
+    return response.json();
+  },
+
+
+  addDiscussion: async (
+    reviewId: string,
+    content: string
+  ): Promise<ReviewDiscussion> => {
+    const response = await fetch(
+      `${API_URL}/reviews/${reviewId}/discussions`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          content
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || 'Gagal menambahkan discussion'
+      );
+    }
+
+    return data.data;
+  },
+
+
+  deleteDiscussion: async (
+    discussionId: string
+  ): Promise<boolean> => {
+    const response = await fetch(
+      `${API_URL}/discussions/${discussionId}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders()
+      }
+    );
 
     return response.ok;
   }

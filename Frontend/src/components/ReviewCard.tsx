@@ -5,12 +5,16 @@ interface ReviewCardProps {
   review: Review;
   onDelete: (reviewId: string) => void;
   onEdit: (review: Review) => void;
+  onHelpful: (reviewId: string) => void;
+  onDiscussion: (reviewId: string) => void;
 }
 
 export default function ReviewCard({
   review,
   onDelete,
-  onEdit
+  onEdit,
+  onHelpful,
+  onDiscussion
 }: ReviewCardProps) {
   const navigate = useNavigate();
 
@@ -31,19 +35,20 @@ export default function ReviewCard({
               className="flex items-center gap-3 text-left group"
             >
               <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold overflow-hidden shrink-0">
-            {review.avatar ? (
-              <img
-                src={review.avatar}
-                alt={review.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              review.name?.charAt(0).toUpperCase() ?? 'U'
-            )}
-            </div>
+                {review.userAvatar ? (
+                  <img
+                    src={review.userAvatar}
+                    alt={review.userName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  review.userName?.charAt(0).toUpperCase() ?? 'U'
+                )}
+              </div>
+
               <div>
                 <p className="font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
-                  {review.name}
+                  {review.userName}
                 </p>
 
                 <p className="text-sm text-slate-400">
@@ -75,6 +80,7 @@ export default function ReviewCard({
         {/* Actions */}
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={() => onEdit(review)}
             className="px-3 py-2 rounded-lg bg-blue-50 text-blue-600 text-sm font-semibold hover:bg-blue-100"
           >
@@ -82,6 +88,7 @@ export default function ReviewCard({
           </button>
 
           <button
+            type="button"
             onClick={() => onDelete(review.id)}
             className="px-3 py-2 rounded-lg bg-red-50 text-red-600 text-sm font-semibold hover:bg-red-100"
           >
@@ -131,6 +138,30 @@ export default function ReviewCard({
           </p>
         </div>
       )}
+
+      {/* Interaction */}
+      <div className="border-t border-slate-100 mt-5 pt-4 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => onHelpful(review.id)}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+            review.isHelpfulByMe
+              ? 'bg-blue-100 text-blue-600'
+              : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          👍 Helpful
+          {review.helpfulCount > 0 && ` (${review.helpfulCount})`}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onDiscussion(review.id)}
+          className="px-4 py-2 rounded-lg bg-slate-50 text-slate-600 text-sm font-semibold hover:bg-slate-100 transition-colors"
+        >
+          💬 Discussion
+        </button>
+      </div>
     </div>
   );
 }

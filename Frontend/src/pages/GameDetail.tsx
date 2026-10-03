@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { gameService } from '../services/gameService';
 import { reviewService } from '../services/reviewService';
-import type { Game, Review, RatingAspect } from '../types';
+import type { Game, Review, ReviewDiscussion, RatingAspect } from '../types';
 import ReviewCard from '../components/ReviewCard';
 import ReviewFormModal from '../components/ReviewFormModal';
 import { libraryService } from '../services/libraryService';
@@ -33,6 +33,21 @@ export default function GameDetail() {
   const [currentUserId, setCurrentUserId] =
     useState<string | null>(null);
 
+    const [discussionReviewId, setDiscussionReviewId] =
+    useState<string | null>(null);
+
+  const [discussions, setDiscussions] =
+    useState<ReviewDiscussion[]>([]);
+
+  const [discussionText, setDiscussionText] =
+    useState('');
+
+  const [isDiscussionLoading, setIsDiscussionLoading] =
+    useState(false);
+
+  const [isDiscussionSubmitting, setIsDiscussionSubmitting] =
+    useState(false);
+    
   useEffect(() => {
     const fetchGameDetail = async () => {
       if (!id) return;
@@ -200,6 +215,8 @@ export default function GameDetail() {
     setEditingReview(null);
   };
 
+
+
   const handleDeleteReview = async (
     reviewId: string
   ) => {
@@ -234,6 +251,83 @@ export default function GameDetail() {
       }
     }
   };
+  const handleHelpful = async (reviewId: string) => {
+  try {
+    const result = await reviewService.toggleHelpful(reviewId);
+
+    setReviews((prev) =>
+      prev.map((review) =>
+        review.id === reviewId
+          ? {
+              ...review,
+              helpfulCount: result.helpfulCount,
+              isHelpfulByMe: result.isHelpful
+            }
+          : review
+      )
+    );
+  } catch (error) {
+    console.error('Gagal mengubah helpful:', error);
+  }
+};
+
+const handleDiscussion = async (reviewId: string) => {
+  try {
+    setDiscussionReviewId(reviewId);
+    setIsDiscussionLoading(true);
+    setDiscussionText('');
+
+    const data = await reviewService.getDiscussions(reviewId);
+
+    setDiscussions(data);
+  } catch (error) {
+    console.error('Gagal mengambil discussion:', error);
+    setDiscussions([]);
+  } finally {
+    setIsDiscussionLoading(false);
+  }
+};
+
+const handleSubmitDiscussion = async () => {
+  if (!discussionReviewId || !discussionText.trim()) return;
+
+  try {
+    setIsDiscussionSubmitting(true);
+
+    const newDiscussion = await reviewService.addDiscussion(
+      discussionReviewId,
+      discussionText.trim()
+    );
+
+    setDiscussions((prev) => [...prev, newDiscussion]);
+    setDiscussionText('');
+  } catch (error) {
+    console.error('Gagal menambahkan discussion:', error);
+  } finally {
+    setIsDiscussionSubmitting(false);
+  }
+};
+
+const handleDeleteDiscussion = async (
+  discussionId: string
+) => {
+  if (!window.confirm('Hapus komentar ini?')) return;
+
+  try {
+    const success =
+      await reviewService.deleteDiscussion(discussionId);
+
+    if (success) {
+      setDiscussions((prev) =>
+        prev.filter(
+          (discussion) => discussion.id !== discussionId
+        )
+      );
+    }
+  } catch (error) {
+    console.error('Gagal menghapus discussion:', error);
+  }
+};
 
   if (isLoading) {
     return (
@@ -462,6 +556,8 @@ export default function GameDetail() {
               review={review}
               onDelete={handleDeleteReview}
               onEdit={handleOpenEditReview}
+              onHelpful={handleHelpful}
+              onDiscussion={handleDiscussion}
             />
           ))}
         </div>
@@ -474,6 +570,148 @@ export default function GameDetail() {
   onSubmit={handleSubmitReview}
   initialData={editingReview}
 />
+
+{discussionReviewId && (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+    onClick={() => setDiscussionReviewId(null)}
+  >
+    <div
+      className="w-full max-w-lg bg-white rounded-2xl shadow-xl"
+      onClick={(event) => event.stopPropagation()}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+        <div>
+          <h2 className="text-xl font-bold text-slate-800">
+            Discussion
+          </h2>
+
+          <p className="text-sm text-slate-400 mt-1">
+            Diskusikan review ini dengan pengguna lain
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setDiscussionReviewId(null)}
+          className="w-9 h-9 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Discussions */}
+      <div className="px-6 py-5">
+        <div className="max-h-80 overflow-y-auto space-y-4">
+          {isDiscussionLoading ? (
+            <p className="text-center text-sm text-slate-400 py-8">
+              Memuat discussion...
+            </p>
+          ) : discussions.length === 0 ? (
+            <p className="text-center text-sm text-slate-400 py-8">
+              Belum ada discussion.
+            </p>
+          ) : (
+            discussions.map((discussion) => (
+              <div
+                key={discussion.id}
+                className="flex gap-3"
+              >
+                {/* Avatar */}
+                <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold overflow-hidden shrink-0">
+                  {discussion.userAvatar ? (
+                    <img
+                      src={discussion.userAvatar}
+                      alt={discussion.userName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    discussion.userName
+                      .charAt(0)
+                      .toUpperCase()
+                  )}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 bg-slate-50 rounded-xl px-4 py-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-semibold text-slate-800 text-sm">
+                      {discussion.userName}
+                    </p>
+
+                    {String(discussion.userId) ===
+                      String(currentUserId) && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleDeleteDiscussion(
+                            discussion.id
+                          )
+                        }
+                        className="text-xs text-red-500 hover:text-red-600"
+                      >
+                        Hapus
+                      </button>
+                    )}
+                  </div>
+
+                  <p className="text-sm text-slate-600 mt-1 whitespace-pre-wrap">
+                    {discussion.content}
+                  </p>
+
+                  <p className="text-xs text-slate-400 mt-2">
+                    {new Date(
+                      discussion.dateAdded
+                    ).toLocaleDateString('id-ID', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    })}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Input */}
+        <div className="border-t border-slate-100 mt-5 pt-5">
+          <textarea
+            value={discussionText}
+            onChange={(event) =>
+              setDiscussionText(event.target.value)
+            }
+            placeholder="Tulis komentar..."
+            rows={3}
+            maxLength={1000}
+            className="w-full resize-none px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+
+          <div className="flex items-center justify-between mt-3">
+            <span className="text-xs text-slate-400">
+              {discussionText.length}/1000
+            </span>
+
+            <button
+              type="button"
+              onClick={handleSubmitDiscussion}
+              disabled={
+                !discussionText.trim() ||
+                isDiscussionSubmitting
+              }
+              className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isDiscussionSubmitting
+                ? 'Mengirim...'
+                : 'Kirim'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }

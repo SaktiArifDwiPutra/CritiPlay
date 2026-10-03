@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { authService } from '../services/authService';
 import { userService } from '../services/userService';
 import type { SearchUser } from '../types';
 
@@ -19,7 +20,39 @@ export default function UserSearchModal({
   const [users, setUsers] = useState<SearchUser[]>([]);
   const [loading, setLoading] = useState(false);
 
-useEffect(() => {
+  const [followingIds, setFollowingIds] = useState<Set<string>>(
+    new Set()
+  );
+
+  const [followLoading, setFollowLoading] = useState<Set<string>>(
+    new Set()
+  );
+
+  // Load following user saat modal dibuka
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const loadFollowing = async () => {
+      try {
+        const profile = await authService.getProfile();
+
+        const following = await userService.getFollowing(
+          String(profile.user.id)
+        );
+
+        setFollowingIds(
+          new Set(following.map((user) => user.id))
+        );
+      } catch (error) {
+        console.error('Gagal mengambil following:', error);
+      }
+    };
+
+    loadFollowing();
+  }, [isOpen]);
+
+  // Search user
+  useEffect(() => {
   if (!isOpen || !query.trim()) {
     return;
   }
@@ -44,22 +77,62 @@ useEffect(() => {
   return () => clearTimeout(timeout);
 }, [query, isOpen]);
 
+  const handleClose = () => {
+    setQuery('');
+    setUsers([]);
+    setLoading(false);
+
+    onClose();
+  };
+
+  const handleUserClick = (userId: string) => {
+    handleClose();
+    navigate(`/profile/${userId}`);
+  };
+
+  const handleToggleFollow = async (userId: string) => {
+    if (followLoading.has(userId)) return;
+
+    setFollowLoading((prev) => {
+      const next = new Set(prev);
+      next.add(userId);
+      return next;
+    });
+
+    try {
+      if (followingIds.has(userId)) {
+        await userService.unfollowUser(userId);
+
+        setFollowingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(userId);
+          return next;
+        });
+      } else {
+        await userService.followUser(userId);
+
+        setFollowingIds((prev) => {
+          const next = new Set(prev);
+          next.add(userId);
+          return next;
+        });
+      }
+    } catch (error) {
+      console.error('Gagal mengubah follow:', error);
+    } finally {
+      setFollowLoading((prev) => {
+        const next = new Set(prev);
+        next.delete(userId);
+        return next;
+      });
+    }
+  };
+
+  // PENTING:
+  // Kalau modal tidak dibuka, jangan render apa pun.
   if (!isOpen) {
     return null;
   }
-
-const handleUserClick = (userId: string) => {
-  handleClose();
-  navigate(`/profile/${userId}`);
-};
-
-const handleClose = () => {
-  setQuery('');
-  setUsers([]);
-  setLoading(false);
-
-  onClose();
-};
 
   return (
     <div
@@ -121,36 +194,59 @@ const handleClose = () => {
             ) : (
               <div className="space-y-2">
                 {users.map((user) => (
-                  <button
+                  <div
                     key={user.id}
-                    type="button"
-                    onClick={() => handleUserClick(user.id)}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors text-left"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors"
                   >
-                    {/* Avatar */}
-                    <div className="w-11 h-11 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold overflow-hidden shrink-0">
-                      {user.avatar ? (
-                        <img
-                          src={user.avatar}
-                          alt={user.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        user.name.charAt(0).toUpperCase()
-                      )}
-                    </div>
+                    {/* User info */}
+                    <button
+                      type="button"
+                      onClick={() => handleUserClick(user.id)}
+                      className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                    >
+                      {/* Avatar */}
+                      <div className="w-11 h-11 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold overflow-hidden shrink-0">
+                        {user.avatar ? (
+                          <img
+                            src={user.avatar}
+                            alt={user.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          user.name.charAt(0).toUpperCase()
+                        )}
+                      </div>
 
-                    {/* Name */}
-                    <div>
-                      <p className="font-semibold text-slate-800">
-                        {user.name}
-                      </p>
+                      {/* Name */}
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-800 truncate">
+                          {user.name}
+                        </p>
 
-                      <p className="text-xs text-slate-400">
-                        Lihat profile
-                      </p>
-                    </div>
-                  </button>
+                        <p className="text-xs text-slate-400">
+                          Lihat profile
+                        </p>
+                      </div>
+                    </button>
+
+                    {/* Follow button */}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleFollow(user.id)}
+                      disabled={followLoading.has(user.id)}
+                      className={`shrink-0 px-3 py-2 rounded-lg text-sm font-bold transition-colors ${
+                        followingIds.has(user.id)
+                          ? 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      } disabled:opacity-60`}
+                    >
+                      {followLoading.has(user.id)
+                        ? '...'
+                        : followingIds.has(user.id)
+                          ? 'Following'
+                          : 'Follow'}
+                    </button>
+                  </div>
                 ))}
               </div>
             )}

@@ -35,8 +35,8 @@ export interface Review {
   gameId: string;
   userId: string;
 
-  name: string;
-  avatar: string | null;
+  userName: string;
+  userAvatar: string | null;
 
   ratingGameplay: number;
   ratingStory: number;
@@ -48,6 +48,15 @@ export interface Review {
 
   helpfulCount: number;
   isHelpfulByMe: boolean;
+}
+
+export interface ReviewDiscussion {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar: string | null;
+  content: string;
+  dateAdded: string;
 }
 
 export interface SearchUser {
@@ -88,6 +97,10 @@ export interface PublicProfile {
     };
 
     total_reviews: number;
+
+    followers_count?: number;
+    following_count?: number;
+    is_following?: boolean;
   };
 
   recent_activity: PublicProfileGame[];
