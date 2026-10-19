@@ -80,6 +80,10 @@ class ReviewController extends Controller
             return response()->json(['message' => 'Not found'], 404);
         }
 
+        if ($review->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Tidak diizinkan.'], 403);
+        }
+
         $review->update([
             'rating_gameplay' => $request->input('rating_gameplay', $review->rating_gameplay),
             'rating_story'    => $request->input('rating_story', $review->rating_story),
@@ -96,14 +100,20 @@ class ReviewController extends Controller
         return response()->json(['message' => 'Review updated']);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $review = Review::find($id);
-        if ($review) {
-            $gameId = $review->game_id;
-            $review->delete();
-            $this->updateGameAverages($gameId);
+        if (!$review) {
+            return response()->json(['message' => 'Review tidak ditemukan.'], 404);
         }
+
+        if ($review->user_id !== $request->user()->id && !$request->user()->isAdmin()) {
+            return response()->json(['message' => 'Tidak diizinkan.'], 403);
+        }
+
+        $gameId = $review->game_id;
+        $review->delete();
+        $this->updateGameAverages($gameId);
 
         return response()->json(['message' => 'Deleted']);
     }
