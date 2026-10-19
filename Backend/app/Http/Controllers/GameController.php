@@ -32,6 +32,10 @@ class GameController extends Controller
     // Update (misalnya perbaikan data manual, opsional)
     public function update(Request $request, $id)
     {
+        if (!$request->user() || !$request->user()->isAdmin()) {
+            return response()->json(['message' => 'Akses ditolak. Anda bukan Admin.'], 403);
+        }
+
         $game = Game::find($id);
 
         if (!$game) {
@@ -51,8 +55,12 @@ class GameController extends Controller
     }
 
     // Delete
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
+        if (!$request->user() || !$request->user()->isAdmin()) {
+            return response()->json(['message' => 'Akses ditolak. Anda bukan Admin.'], 403);
+        }
+
         $game = Game::find($id);
 
         if (!$game) {
