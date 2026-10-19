@@ -18,7 +18,7 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
-Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:5,1');
 Route::post('/resend-otp', [AuthController::class, 'resendOtp'])->middleware('throttle:3,1');
 
 Route::get('/auth/google/redirect', [SocialAuthController::class, 'redirect']);
