@@ -59,11 +59,8 @@ class GameImportController extends Controller
                 ]);
 } catch (\Exception $e) {
                 Log::error('Import IGDB Error: ' . $e->getMessage());
-                // Kita tambahin $e->getMessage() biar error aslinya keliatan di Thunder Client
                 return response()->json([
-                    'message' => 'Gagal import dari IGDB.',
-                    'error_asli' => $e->getMessage(),
-                    'di_baris' => $e->getLine()
+                    'message' => 'Gagal import dari IGDB.'
                 ], 500);
             }
         }

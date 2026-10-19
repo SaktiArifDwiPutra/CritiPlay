@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -15,35 +16,41 @@ class SocialAuthController extends Controller
         return Socialite::driver('google')->redirect();
     }
 
-public function callback()
-{
-    try {
-        $googleUser = Socialite::driver('google')->user();
+    public function callback()
+    {
+        $frontendUrl = config('app.frontend_url', 'http://localhost:5173');
 
-        $user = User::where('google_id', $googleUser->id)
-                    ->orWhere('email', $googleUser->email)
-                    ->first();
+        try {
+            $googleUser = Socialite::driver('google')->user();
 
-        if (!$user) {
-            $user = User::create([
-                'name' => $googleUser->name,
-                'email' => $googleUser->email,
-                'google_id' => $googleUser->id,
-                'password' => Hash::make(Str::random(24)),
-            ]);
-        } else {
-            if (!$user->google_id) {
-                $user->update(['google_id' => $googleUser->id]);
+            $user = User::where('google_id', $googleUser->id)
+                        ->orWhere('email', $googleUser->email)
+                        ->first();
+
+            if (!$user) {
+                $user = User::create([
+                    'name'              => $googleUser->name,
+                    'email'             => $googleUser->email,
+                    'google_id'         => $googleUser->id,
+                    'password'          => Hash::make(Str::random(24)),
+                    'email_verified_at' => now(),
+                ]);
+            } else {
+                if (!$user->google_id) {
+                    $user->update([
+                        'google_id'         => $googleUser->id,
+                        'email_verified_at' => $user->email_verified_at ?? now(),
+                    ]);
+                }
             }
+
+            $token = $user->createToken('critiplay_token')->plainTextToken;
+
+            return redirect($frontendUrl . '/google-callback?token=' . $token);
+
+        } catch (\Exception $e) {
+            Log::error('Google Auth Error: ' . $e->getMessage());
+            return redirect($frontendUrl . '/login?error=auth_failed');
         }
-
-        $token = $user->createToken('critiplay_token')->plainTextToken;
-
-        return redirect('http://localhost:5173/google-callback?token=' . $token);
-
-    } catch (\Exception $e) {
-        // CETAK ERROR ASLINYA KE LAYAR, JANGAN DI-REDIRECT DULU!
-        dd($e->getMessage());
     }
-}
 }

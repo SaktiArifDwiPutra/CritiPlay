@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\IgdbService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class GameSearchController extends Controller
 {
@@ -57,8 +58,9 @@ class GameSearchController extends Controller
             return response()->json($formattedGames);
 
         } catch (\Exception $e) {
+            Log::error('Game Search Error: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Terjadi kesalahan server: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan server saat mencari game.'
             ], 500);
         }
     }
