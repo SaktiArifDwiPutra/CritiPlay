@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
-use App\Mail\OtpVerificationMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -200,12 +199,24 @@ class AuthController extends Controller
 
         $user->name = $request->input('name');
         $newEmail = $request->input('email');
+        $emailChanged = false;
 
         if ($newEmail !== $user->email) {
+            $emailChanged = true;
+            $otp = random_int(100000, 999999);
+
             $user->email = $newEmail;
             $user->email_verified_at = null;
-        } else {
-            $user->email = $newEmail;
+            $user->otp = $otp;
+            $user->otp_expires_at = Carbon::now()->addMinutes(10);
+
+            try {
+                Mail::raw("Your CritiPlay verification code is {$otp}.", function ($message) use ($user) {
+                    $message->to($user->email)->subject('CritiPlay OTP Verification');
+                });
+            } catch (\Exception $e) {
+                Log::error('Gagal kirim OTP update email: ' . $e->getMessage());
+            }
         }
 
         if ($request->hasFile('avatar')) {
@@ -219,8 +230,13 @@ class AuthController extends Controller
 
         $user->save();
 
+        $message = $emailChanged
+            ? 'Profil berhasil diperbarui. Silakan cek email baru Anda untuk kode OTP verifikasi.'
+            : 'Profil berhasil diperbarui';
+
         return response()->json([
-            'message' => 'Profil berhasil diperbarui',
+            'message' => $message,
+            'email_changed' => $emailChanged,
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
