@@ -6,24 +6,18 @@ import { authService } from '../services/authService';
 export default function VerifyOtp() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-
   const email = searchParams.get('email') || '';
-
   const [digits, setDigits] = useState<string[]>(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
-
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  // Focus the first input on initial mount
   useEffect(() => {
     inputRefs.current[0]?.focus();
   }, []);
 
   const handleInputChange = (index: number, val: string) => {
-    // Keep only numbers
     const clean = val.replace(/\D/g, '');
 
     if (!clean) {
@@ -33,7 +27,6 @@ export default function VerifyOtp() {
       return;
     }
 
-    // If pasted or multiple digits entered
     if (clean.length > 1) {
       const next = [...digits];
       for (let i = 0; i < clean.length && index + i < 6; i++) {
@@ -45,12 +38,9 @@ export default function VerifyOtp() {
       return;
     }
 
-    // Single digit
     const next = [...digits];
     next[index] = clean;
     setDigits(next);
-
-    // Auto-advance to next input
     if (index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -59,7 +49,6 @@ export default function VerifyOtp() {
   const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace') {
       if (!digits[index] && index > 0) {
-        // Move back and clear previous
         const next = [...digits];
         next[index - 1] = '';
         setDigits(next);

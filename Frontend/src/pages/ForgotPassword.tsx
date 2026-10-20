@@ -3,9 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Mail, ArrowLeft } from 'lucide-react';
 import { authService } from '../services/authService';
 
-// ---------------------------------------------------------------------------
-// Reuse the same game card mosaic assets as the login page
-// ---------------------------------------------------------------------------
 const CARDS = [
   { title: 'Delands',     sub: 'Koleksi pribadi', rating: '9.2', img: '/cover_delands.jpg'     },
   { title: 'The Wild',    sub: 'Koleksi pribadi', rating: '9.4', img: '/cover_the_wild.jpg'    },
@@ -68,7 +65,6 @@ const MosaicPanel = () => (
       </div>
     </div>
 
-    {/* Brand mark — top-left */}
     <div className="absolute left-7 top-7 z-20 flex items-center gap-2">
       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white">
         C
@@ -76,7 +72,6 @@ const MosaicPanel = () => (
       <span className="text-base font-bold text-white">CritiPlay.</span>
     </div>
 
-    {/* Tagline — bottom-left */}
     <div className="absolute bottom-0 left-0 z-20 p-8 text-left">
       <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-indigo-400">
         — game-mu. ceritamu.
@@ -91,9 +86,6 @@ const MosaicPanel = () => (
   </div>
 );
 
-// ---------------------------------------------------------------------------
-// Main page
-// ---------------------------------------------------------------------------
 export default function ForgotPassword() {
   const [email, setEmail]     = useState('');
   const [message, setMessage] = useState('');
@@ -124,15 +116,11 @@ export default function ForgotPassword() {
   return (
     <div className="flex h-screen overflow-hidden bg-slate-950">
 
-      {/* ── Left mosaic panel (desktop only) ─────────────────────────── */}
       <div className="hidden h-full w-[52%] lg:block">
         <MosaicPanel />
       </div>
-
-      {/* ── Right form panel ──────────────────────────────────────────── */}
       <div className="flex h-full w-full flex-col items-center justify-center overflow-y-auto px-6 py-10 lg:w-[48%] lg:px-14">
 
-        {/* Mobile brand */}
         <div className="mb-8 flex items-center gap-2 lg:hidden">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white">C</div>
           <span className="text-base font-bold text-white">CritiPlay.</span>
@@ -140,32 +128,26 @@ export default function ForgotPassword() {
 
         <div className="w-full max-w-[360px]">
 
-          {/* Icon */}
           <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600/15 ring-1 ring-indigo-500/30">
             <Mail className="h-5 w-5 text-indigo-400" />
           </div>
-
-          {/* Heading */}
           <h1 className="text-2xl font-extrabold text-white">Lupa Password?</h1>
           <p className="mt-1 text-sm text-slate-400">
             Masukkan email akun kamu. Kami akan mengirimkan link untuk reset password.
           </p>
 
-          {/* Success banner */}
           {message && (
             <div className="mt-4 rounded-xl bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-400 ring-1 ring-emerald-500/20">
               {message}
             </div>
           )}
 
-          {/* Error banner */}
           {error && (
             <div className="mt-4 rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium text-red-400 ring-1 ring-red-500/20">
               {error}
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="mt-7 space-y-4">
             <div>
               <label className="mb-1.5 block text-sm font-semibold text-slate-300">
@@ -193,7 +175,6 @@ export default function ForgotPassword() {
             </button>
           </form>
 
-          {/* Back to login */}
           <button
             type="button"
             onClick={() => navigate('/login')}
@@ -204,7 +185,6 @@ export default function ForgotPassword() {
           </button>
         </div>
 
-        {/* Security note */}
         <p className="mt-10 flex items-center gap-1.5 text-xs text-slate-600">
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />

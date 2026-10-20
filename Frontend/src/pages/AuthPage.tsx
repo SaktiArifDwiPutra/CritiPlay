@@ -71,7 +71,6 @@ const MosaicPanel = ({
       </div>
     </div>
 
-    {/* Brand mark */}
     <div
       className={`absolute top-7 z-20 flex items-center gap-2 ${
         flipped ? 'right-7 flex-row-reverse' : 'left-7'
@@ -84,7 +83,6 @@ const MosaicPanel = ({
       <span className="text-base font-bold text-white">CritiPlay.</span>
     </div>
 
-    {/* Tagline */}
     <div
       className={`absolute bottom-0 z-20 p-8 ${
         flipped ? 'right-0 text-right' : 'left-0 text-left'
@@ -126,8 +124,6 @@ const EASE = 'cubic-bezier(0.76, 0, 0.24, 1)';
 export default function AuthPage() {
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
-  // Separate state for the label (logo + tagline) so it can flip at the
-  // midpoint of the panel slide with an opacity crossfade.
   const [labelFlipped, setLabelFlipped] = useState(false);
   const [labelOpacity, setLabelOpacity] = useState(1);
   const [name, setName] = useState('');
@@ -187,10 +183,7 @@ export default function AuthPage() {
     setName('');
     setPassword('');
     setPasswordConfirmation('');
-
-    // 1. Immediately fade labels out (0.28s)
     setLabelOpacity(0);
-    // 2. At the midpoint of the 700ms panel slide, flip the labels and fade back in
     setTimeout(() => {
       setLabelFlipped((p) => !p);
       setLabelOpacity(1);
