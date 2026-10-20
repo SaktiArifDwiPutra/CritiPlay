@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\Models\Review;
+
 class LibraryController extends Controller
 {
     public function index(Request $request)
     {
         $status = $request->query('status', 'all');
+        $userId = $request->user()->id;
 
         $query = $request->user()->games();
 
@@ -16,7 +19,22 @@ class LibraryController extends Controller
             $query->wherePivot('status', $status);
         }
 
-        $library = $query->get();
+        $library = $query->get()->map(function ($game) use ($userId) {
+            $review = Review::where('user_id', $userId)
+                ->where('game_id', $game->id)
+                ->first();
+
+            $game->user_review = $review ? [
+                'id'              => (string) $review->id,
+                'rating_gameplay' => (float) $review->rating_gameplay,
+                'rating_story'    => (float) $review->rating_story,
+                'rating_visual'   => (float) $review->rating_visual,
+                'rating_overall'  => (float) $review->rating_overall,
+                'review_text'     => $review->review_text,
+            ] : null;
+
+            return $game;
+        });
 
         return response()->json($library, 200);
     }

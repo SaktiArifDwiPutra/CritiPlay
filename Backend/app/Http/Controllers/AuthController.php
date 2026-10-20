@@ -166,9 +166,16 @@ class AuthController extends Controller
 
         $totalReviews = $user->reviews()->count();
 
+        $avgRatings = [
+            'gameplay' => round((float) $user->reviews()->avg('rating_gameplay'), 1) ?: 0,
+            'story'    => round((float) $user->reviews()->avg('rating_story'), 1) ?: 0,
+            'visual'   => round((float) $user->reviews()->avg('rating_visual'), 1) ?: 0,
+            'overall'  => round((float) $user->reviews()->avg('rating_overall'), 1) ?: 0,
+        ];
+
         $recentGames = $user->games()
             ->orderByPivot('updated_at', 'desc')
-            ->limit(3)
+            ->limit(4)
             ->get();
 
         return response()->json([
@@ -182,6 +189,7 @@ class AuthController extends Controller
             'stats' => [
                 'library'       => $libraryStats,
                 'total_reviews' => $totalReviews,
+                'avg_ratings'   => $avgRatings,
             ],
             'recent_activity' => $recentGames,
         ], 200);
