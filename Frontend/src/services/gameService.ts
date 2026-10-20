@@ -115,6 +115,23 @@ const fetchDatabaseIdsByIgdbId = async (): Promise<Map<number, string>> => {
   return idMap;
 };
 
+const RECOMMENDATION_SEEDS = [
+  'quest', 'legend', 'dark', 'world', 'night', 'star', 'dragon', 'city',
+  'racing', 'soul', 'hero', 'ghost', 'blade', 'farm', 'war', 'sky',
+  'craft', 'tale', 'dead', 'hunter', 'kingdom', 'shadow', 'space', 'survival',
+];
+
+const shuffle = <T>(items: T[]): T[] => {
+  const copy = [...items];
+
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+
+  return copy;
+};
+
 export const gameService = {
   getAllGames: async (): Promise<Game[]> => {
     const response = await fetch(API_URL, { headers: getHeaders() });
@@ -175,6 +192,40 @@ export const gameService = {
         }
       })
     );
+  },
+
+  getRecommendedGames: async (
+    limit = 12
+  ): Promise<(ExternalGame | Game)[]> => {
+    const seeds = shuffle(RECOMMENDATION_SEEDS).slice(0, 3);
+
+    const settled = await Promise.allSettled(
+      seeds.map((seed) => gameService.searchGames(seed))
+    );
+
+    if (settled.every((result) => result.status === 'rejected')) {
+      throw new Error('Gagal mengambil rekomendasi');
+    }
+
+    const seen = new Set<number>();
+    const games: (ExternalGame | Game)[] = [];
+
+    settled.forEach((result) => {
+      if (result.status !== 'fulfilled') return;
+
+      result.value.forEach((game) => {
+        if (!game.cover_url) return;
+
+        if (game.igdb_id > 0) {
+          if (seen.has(game.igdb_id)) return;
+          seen.add(game.igdb_id);
+        }
+
+        games.push(game);
+      });
+    });
+
+    return shuffle(games).slice(0, limit);
   },
 
   importGame: async (igdbId: number): Promise<Game> => {
