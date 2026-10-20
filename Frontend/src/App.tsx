@@ -35,7 +35,7 @@ export default function App() {
   return (
     <BrowserRouter>
       {/* Hapus padding dari div utama agar Navbar bisa full-width */}
-      <div className="min-h-screen bg-slate-50 font-sans">
+      <div className="min-h-screen bg-slate-950 font-sans">
         <Routes>
           <Route path="/login" element={<AuthPage />} />
           <Route path="/" element={<ProtectedRoute><GameList /></ProtectedRoute>} />
