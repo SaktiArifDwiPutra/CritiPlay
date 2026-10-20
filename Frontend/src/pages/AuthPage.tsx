@@ -37,7 +37,13 @@ const GameCard = ({
   </div>
 );
 
-const MosaicPanel = () => (
+const MosaicPanel = ({
+  flipped = false,
+  labelOpacity = 1,
+}: {
+  flipped?: boolean;
+  labelOpacity?: number;
+}) => (
   <div className="relative h-full w-full overflow-hidden bg-slate-950">
     <div className="pointer-events-none absolute inset-0 z-10 bg-black/40" />
     <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-slate-950 to-transparent" />
@@ -65,22 +71,34 @@ const MosaicPanel = () => (
       </div>
     </div>
 
-    <div className="absolute left-7 top-7 z-20 flex items-center gap-2">
+    {/* Brand mark */}
+    <div
+      className={`absolute top-7 z-20 flex items-center gap-2 ${
+        flipped ? 'right-7 flex-row-reverse' : 'left-7'
+      }`}
+      style={{ opacity: labelOpacity, transition: 'opacity 0.28s ease' }}
+    >
       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white">
         C
       </div>
       <span className="text-base font-bold text-white">CritiPlay.</span>
     </div>
 
-    <div className="absolute bottom-0 left-0 right-0 z-20 p-8">
+    {/* Tagline */}
+    <div
+      className={`absolute bottom-0 z-20 p-8 ${
+        flipped ? 'right-0 text-right' : 'left-0 text-left'
+      }`}
+      style={{ opacity: labelOpacity, transition: 'opacity 0.28s ease' }}
+    >
       <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-indigo-400">
-        — game-mu. ceritamu.
+        {flipped ? 'game-mu. ceritamu. —' : '— game-mu. ceritamu.'}
       </p>
       <h2 className="text-2xl font-extrabold leading-snug text-white">
         Tempat pribadi untuk<br />mengingat apa yang<br />kamu mainkan.
       </h2>
       <p className="mt-3 text-sm text-slate-400">
-        Simpan koleksimu, tulis ulasan, dan temukan game yang berkesan.
+        Simpan koleksimu, tulis ulasan,<br />dan temukan game yang berkesan.
       </p>
     </div>
   </div>
@@ -108,6 +126,10 @@ const EASE = 'cubic-bezier(0.76, 0, 0.24, 1)';
 export default function AuthPage() {
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
+  // Separate state for the label (logo + tagline) so it can flip at the
+  // midpoint of the panel slide with an opacity crossfade.
+  const [labelFlipped, setLabelFlipped] = useState(false);
+  const [labelOpacity, setLabelOpacity] = useState(1);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -165,6 +187,14 @@ export default function AuthPage() {
     setName('');
     setPassword('');
     setPasswordConfirmation('');
+
+    // 1. Immediately fade labels out (0.28s)
+    setLabelOpacity(0);
+    // 2. At the midpoint of the 700ms panel slide, flip the labels and fade back in
+    setTimeout(() => {
+      setLabelFlipped((p) => !p);
+      setLabelOpacity(1);
+    }, 350);
   };
 
   const mosaicLeft  = isLoginMode ? '0%'  : '48%';
@@ -176,7 +206,7 @@ export default function AuthPage() {
         className="absolute top-0 hidden h-full w-[52%] lg:block"
         style={{ left: mosaicLeft, transition: panelTransition }}
       >
-        <MosaicPanel />
+        <MosaicPanel flipped={labelFlipped} labelOpacity={labelOpacity} />
       </div>
 
       <div
@@ -202,7 +232,7 @@ export default function AuthPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+          <form onSubmit={handleSubmit} className="mt-5 space-y-3">
             {!isLoginMode && (
               <InputField label="Nama Lengkap" icon={User}>
                 <input
@@ -266,7 +296,7 @@ export default function AuthPage() {
             </button>
           </form>
 
-          <div className="my-5 flex items-center gap-3">
+          <div className="my-3 flex items-center gap-3">
             <span className="h-px flex-1 bg-slate-800" />
             <span className="text-xs font-medium text-slate-500">atau</span>
             <span className="h-px flex-1 bg-slate-800" />
@@ -286,7 +316,7 @@ export default function AuthPage() {
             Lanjutkan dengan Google
           </button>
 
-          <p className="mt-7 text-center text-sm text-slate-500">
+          <p className="mt-4 text-center text-sm text-slate-500">
             {isLoginMode ? 'Belum punya akun? ' : 'Sudah punya akun? '}
             <button type="button" onClick={switchMode}
               className="font-bold text-indigo-400 transition-colors hover:text-indigo-300">
@@ -295,7 +325,7 @@ export default function AuthPage() {
           </p>
         </div>
 
-        <p className="mt-8 flex items-center gap-1.5 text-xs text-slate-600">
+        <p className="mt-6 flex items-center gap-1.5 text-xs text-slate-600">
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
