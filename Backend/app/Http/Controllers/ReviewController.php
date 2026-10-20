@@ -83,12 +83,12 @@ class ReviewController extends Controller
         if ($review->user_id !== $request->user()->id) {
             return response()->json(['message' => 'Tidak diizinkan.'], 403);
         }
-$request->validate([
-    'rating_gameplay' => 'sometimes|numeric|min:1|max:10',
-    'rating_story' => 'sometimes|numeric|min:1|max:10',
-    'rating_visual' => 'sometimes|numeric|min:1|max:10',
-    'review_text' => 'nullable|string',
-]);
+        $request->validate([
+            'rating_gameplay' => 'sometimes|numeric|min:1|max:10',
+            'rating_story' => 'sometimes|numeric|min:1|max:10',
+            'rating_visual' => 'sometimes|numeric|min:1|max:10',
+            'review_text' => 'nullable|string',
+        ]);
         $review->update([
             'rating_gameplay' => $request->input('rating_gameplay', $review->rating_gameplay),
             'rating_story'    => $request->input('rating_story', $review->rating_story),
@@ -96,7 +96,6 @@ $request->validate([
             'review_text'     => $request->input('review_text', $review->review_text),
         ]);
 
-        // Hitung ulang overall milik review ini kalau ada rating yang berubah
         $overallUser = ($review->rating_gameplay + $review->rating_story + $review->rating_visual) / 3;
         $review->update(['rating_overall' => round($overallUser, 1)]);
 
