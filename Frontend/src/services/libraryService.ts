@@ -21,6 +21,14 @@ export interface LibraryGame {
   pivot?: {
     status: LibraryStatus;
   };
+  user_review?: {
+    id: string;
+    rating_gameplay: number;
+    rating_story: number;
+    rating_visual: number;
+    rating_overall: number;
+    review_text: string | null;
+  } | null;
 }
 
 const getHeaders = () => ({
