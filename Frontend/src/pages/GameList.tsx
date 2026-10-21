@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { gameService } from '../services/gameService';
-import type { RecentReview } from '../services/gameService';
+import type { RecentReview, ReleaseGame } from '../services/gameService';
 import type { ExternalGame, Game } from '../types';
 
 type GameItem = ExternalGame | Game;
@@ -591,7 +591,44 @@ const formatReviewDate = (value: string | null) => {
   });
 };
 
-const RecommendationBanner = ({ game }: { game: GameItem }) => {
+const parseReleaseDate = (value: string | null) => {
+  if (!value) return null;
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const formatReleaseDate = (value: string | null) => {
+  const date = parseReleaseDate(value);
+  if (!date) return 'Tanggal belum pasti';
+  return date.toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
+const getReleaseEyebrow = (value: string | null) => {
+  const date = parseReleaseDate(value);
+  if (!date) return 'Segera rilis';
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Math.round((date.getTime() - today.getTime()) / 86400000);
+
+  let label = `Rilis ${days} hari lagi`;
+  if (days <= 0) label = 'Rilis hari ini';
+  if (days === 1) label = 'Rilis besok';
+
+  return `${label}, ${formatReleaseDate(value)}`;
+};
+
+const RecommendationBanner = ({
+  game,
+  eyebrow = 'Layak dicoba',
+}: {
+  game: GameItem;
+  eyebrow?: string;
+}) => {
   const { openGame, isOpening } = useOpenGame();
   const [saveState, setSaveState] = useState<SaveState>('idle');
 
@@ -625,7 +662,7 @@ const RecommendationBanner = ({ game }: { game: GameItem }) => {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col justify-center">
-        <p className="text-sm font-semibold text-violet-300">Layak dicoba</p>
+        <p className="text-sm font-semibold text-violet-300">{eyebrow}</p>
         <h3 className="mt-1 line-clamp-2 text-xl font-extrabold text-slate-50">
           {game.name}
         </h3>
@@ -822,6 +859,67 @@ const RankColumn = ({
   </div>
 );
 
+const ReleaseRow = ({
+  game,
+  detail,
+}: {
+  game: ReleaseGame;
+  detail: string;
+}) => {
+  const { openGame, isOpening } = useOpenGame();
+
+  return (
+    <button
+      type="button"
+      onClick={() => openGame(game)}
+      disabled={isOpening}
+      className="group flex w-full items-center gap-3 py-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-70"
+    >
+      {game.cover_url ? (
+        <img
+          src={game.cover_url}
+          alt=""
+          loading="lazy"
+          className="aspect-[2/3] w-10 shrink-0 rounded object-cover"
+        />
+      ) : (
+        <div className="aspect-[2/3] w-10 shrink-0 rounded bg-slate-800" />
+      )}
+      <div className="min-w-0">
+        <p className="line-clamp-1 text-sm font-semibold text-slate-100 transition-colors group-hover:text-indigo-400">
+          {game.name}
+        </p>
+        <p className="text-xs text-slate-400">{detail}</p>
+      </div>
+    </button>
+  );
+};
+
+const ReleaseColumn = ({
+  title,
+  games,
+  detail,
+}: {
+  title: string;
+  games: ReleaseGame[];
+  detail: (game: ReleaseGame) => string;
+}) => (
+  <div>
+    <h3 className="mb-2 border-b-2 border-indigo-500 pb-2 text-lg font-extrabold text-slate-50">
+      {title}
+    </h3>
+    {games.length > 0 ? (
+      <div className="divide-y divide-white/5">
+        {games.map((game) => (
+          <ReleaseRow key={game.igdb_id} game={game} detail={detail(game)} />
+        ))}
+      </div>
+    ) : (
+      <p className="py-3 text-sm text-slate-400">Belum ada data.</p>
+    )}
+  </div>
+);
+
 const HeroPick = ({ game, rank }: { game: Game; rank: number }) => {
   const { openGame, isOpening } = useOpenGame();
 
@@ -977,6 +1075,9 @@ export default function GameList() {
   const [hasRecommendationError, setHasRecommendationError] = useState(false);
   const [recentReviews, setRecentReviews] = useState<RecentReview[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
+    const [releasedGames, setReleasedGames] = useState<ReleaseGame[]>([]);
+  const [upcomingGames, setUpcomingGames] = useState<ReleaseGame[]>([]);
+  const [anticipatedGames, setAnticipatedGames] = useState<ReleaseGame[]>([]);
 
   const [recentGames, setRecentGames] = useState<Game[]>(readRecentGames);
   const [activeAspect, setActiveAspect] = useState<AspectKey>('gameplay');
@@ -1108,6 +1209,20 @@ export default function GameList() {
       .then(setRecentReviews)
       .catch((error) => console.error('Gagal mengambil review terbaru:', error))
       .finally(() => setIsLoadingReviews(false));
+  }, []);
+
+  useEffect(() => {
+    Promise.allSettled([
+      gameService.getReleases('recent', 5),
+      gameService.getReleases('upcoming', 7),
+      gameService.getReleases('anticipated', 5),
+    ]).then(([recent, upcoming, anticipated]) => {
+      if (recent.status === 'fulfilled') setReleasedGames(recent.value);
+      if (upcoming.status === 'fulfilled') setUpcomingGames(upcoming.value);
+      if (anticipated.status === 'fulfilled') {
+        setAnticipatedGames(anticipated.value);
+      }
+    });
   }, []);
 
   const allGames = useMemo(() => {
@@ -1243,19 +1358,7 @@ export default function GameList() {
       );
     }
 
-    const banners = visibleRecommendations.slice(0, 2);
-    const rest = visibleRecommendations.slice(2);
-
-    return (
-      <>
-        <div className="mb-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
-          {banners.map((game) => (
-            <RecommendationBanner key={getGameKey(game)} game={game} />
-          ))}
-        </div>
-        {rest.length > 0 && <GameRow games={rest} />}
-      </>
-    );
+    return <GameRow games={visibleRecommendations} />;
   };
 
   const renderRecommendations = () => (
@@ -1430,6 +1533,23 @@ export default function GameList() {
           </Section>
         )}
 
+        {upcomingGames.length > 0 && (
+          <Section
+            title="Segera rilis"
+            subtitle="Simpan ke Plan to Play sebelum game-nya terbit."
+          >
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+              {upcomingGames.slice(0, 2).map((game) => (
+                <RecommendationBanner
+                  key={game.igdb_id}
+                  game={game}
+                  eyebrow={getReleaseEyebrow(game.release_date)}
+                />
+              ))}
+            </div>
+          </Section>
+        )}
+
         {renderRecommendations()}
 
         {hiddenGems.length >= 2 && (
@@ -1474,6 +1594,35 @@ export default function GameList() {
               {aspectContrasts.map((item) => (
                 <ContrastCard key={item.game.id} item={item} />
               ))}
+            </div>
+          </Section>
+        )}
+
+        {(releasedGames.length > 0 ||
+          upcomingGames.length > 2 ||
+          anticipatedGames.length > 0) && (
+          <Section
+            title="Radar rilis"
+            subtitle="Yang baru terbit, yang segera terbit, dan yang paling ditunggu."
+          >
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+              <ReleaseColumn
+                title="Baru rilis"
+                games={releasedGames}
+                detail={(game) => formatReleaseDate(game.release_date)}
+              />
+              <ReleaseColumn
+                title="Segera rilis"
+                games={upcomingGames.slice(2, 7)}
+                detail={(game) => formatReleaseDate(game.release_date)}
+              />
+              <ReleaseColumn
+                title="Paling dinanti"
+                games={anticipatedGames}
+                detail={(game) =>
+                  `${formatReleaseDate(game.release_date)}, ${game.hypes} menunggu`
+                }
+              />
             </div>
           </Section>
         )}

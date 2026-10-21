@@ -40,6 +40,13 @@ const getHeaders = () => ({
 const toNumber = (value: number | string | null | undefined): number =>
   Number(value ?? 0);
 
+/** Normalizes a value that should be a string[] but may arrive as a keyed object ({"0":"val"}) from PHP */
+const toStringArray = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value as string[];
+  if (value && typeof value === 'object') return Object.values(value as Record<string, string>);
+  return [];
+};
+
 const mapGame = (raw: RawGame): Game => ({
   id: String(raw.id),
   igdb_id: Number(raw.igdb_id ?? raw.igdbId ?? 0),
@@ -124,6 +131,24 @@ export interface RecentReview {
 
 const LIBRARY_URL = 'http://127.0.0.1:8000/api/library';
 const REVIEWS_URL = 'http://127.0.0.1:8000/api/reviews';
+
+interface RawReleaseGame {
+  igdb_id: number | string;
+  name: string;
+  cover_url?: string | null;
+  release_date?: string | null;
+  release_year?: string | null;
+  hypes?: number | null;
+  genres?: string[] | null;
+  platforms?: string[] | null;
+}
+
+export type ReleaseType = 'recent' | 'upcoming' | 'anticipated';
+
+export type ReleaseGame = ExternalGame & {
+  release_date: string | null;
+  hypes: number;
+};
 
 export const gameService = {
   getAllGames: async (): Promise<Game[]> => {
@@ -232,6 +257,32 @@ export const gameService = {
         helpfulCount: toNumber(review.helpfulCount),
         dateAdded: review.dateAdded ?? null
       }));
+  },
+
+  getReleases: async (
+    type: ReleaseType,
+    limit = 10
+  ): Promise<ReleaseGame[]> => {
+    const response = await fetch(`${API_URL}/releases/${type}?limit=${limit}`, {
+      headers: getHeaders()
+    });
+
+    if (!response.ok) {
+      throw new Error('Gagal mengambil data rilis');
+    }
+
+    const data: RawReleaseGame[] = await response.json();
+
+    return data.map((game) => ({
+      igdb_id: Number(game.igdb_id),
+      name: game.name,
+      cover_url: game.cover_url ?? null,
+      release_year: game.release_year ?? null,
+      genres: toStringArray(game.genres),
+      platforms: toStringArray(game.platforms),
+      release_date: game.release_date ?? null,
+      hypes: Number(game.hypes ?? 0)
+    }));
   },
 
   addToLibrary: async (
