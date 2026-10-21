@@ -12,6 +12,7 @@ use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\ReviewDiscussionController;
+use App\Http\Controllers\GameReleaseController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -41,6 +42,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/games/top-rated', [GameController::class, 'topRated']);
     Route::get('/games/top-rated-summary', [GameController::class, 'topRatedSummary']);
     Route::get('/games/recommendations', [GameController::class, 'recommendations']);
+    Route::get('/games/releases/{type}', [GameReleaseController::class, 'index'])
+        ->whereIn('type', ['recent', 'upcoming', 'anticipated']);
 
     Route::apiResource('games', GameController::class)->only(['index', 'show']);
     Route::middleware('admin')->group(function () {
