@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
+  Check,
   ChevronLeft,
   ChevronRight,
   Gamepad2,
+  Plus,
   RefreshCw,
   Search,
   Star,
@@ -13,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { gameService } from '../services/gameService';
+import type { RecentReview } from '../services/gameService';
 import type { ExternalGame, Game } from '../types';
 
 type GameItem = ExternalGame | Game;
@@ -30,6 +33,33 @@ const ASPECT_TABS: { key: AspectKey; label: string }[] = [
   { key: 'story', label: 'Story' },
   { key: 'visual', label: 'Visual' },
 ];
+
+const ASPECT_LABEL: Record<AspectKey, string> = {
+  gameplay: 'Gameplay',
+  story: 'Story',
+  visual: 'Visual',
+};
+
+const ASPECT_FIELD = {
+  gameplay: 'avgGameplay',
+  story: 'avgStory',
+  visual: 'avgVisual',
+} as const;
+
+const BAR_COLOR: Record<AspectKey, string> = {
+  gameplay: 'bg-indigo-500',
+  story: 'bg-violet-400',
+  visual: 'bg-indigo-300',
+};
+
+const GEM_MIN_SCORE = 7.5;
+const CONTRAST_MIN_GAP = 1.5;
+
+type AspectContrast = {
+  game: Game;
+  high: AspectKey;
+  low: AspectKey;
+};
 
 const CHIP_TONE = {
   indigo: 'bg-indigo-600 text-white ring-indigo-600',
@@ -369,6 +399,429 @@ const ChipGroup = ({
   </div>
 );
 
+const aspectScore = (game: Game, aspect: AspectKey) =>
+  Number(game[ASPECT_FIELD[aspect]] ?? 0);
+
+const AspectTile = ({
+  game,
+  aspect,
+  large = false,
+  className = '',
+}: {
+  game: Game;
+  aspect: AspectKey;
+  large?: boolean;
+  className?: string;
+}) => {
+  const { openGame, isOpening } = useOpenGame();
+
+  return (
+    <button
+      type="button"
+      onClick={() => openGame(game)}
+      disabled={isOpening}
+      className={`group relative overflow-hidden rounded-xl bg-slate-800 text-left outline-none ring-1 ring-white/10 focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-70 ${className}`}
+    >
+      {game.cover_url && (
+        <img
+          src={game.cover_url}
+          alt=""
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
+        />
+      )}
+
+      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-slate-950/75 p-4 backdrop-blur-sm">
+        <div className="min-w-0">
+          <h3
+            className={`line-clamp-1 font-bold text-slate-50 ${large ? 'text-xl' : 'text-base'}`}
+          >
+            {game.name}
+          </h3>
+          <p className="mt-0.5 line-clamp-1 text-sm text-slate-400">
+            {(game.genres ?? []).slice(0, 2).join(', ')}
+          </p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-xs font-semibold text-violet-300">
+            Unggul di {ASPECT_LABEL[aspect]}
+          </p>
+          <p
+            className={`font-extrabold text-slate-50 ${large ? 'text-3xl' : 'text-xl'}`}
+          >
+            {aspectScore(game, aspect).toFixed(1)}
+          </p>
+        </div>
+      </div>
+
+      {isOpening && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-950/50">
+          <RefreshCw className="h-5 w-5 animate-spin text-white" />
+        </div>
+      )}
+    </button>
+  );
+};
+
+const GemCard = ({ game }: { game: Game }) => {
+  const { openGame, isOpening } = useOpenGame();
+
+  return (
+    <button
+      type="button"
+      onClick={() => openGame(game)}
+      disabled={isOpening}
+      className="group flex flex-col overflow-hidden rounded-xl bg-slate-900 text-left outline-none ring-1 ring-white/10 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-70"
+    >
+      <div className="relative h-36 w-full overflow-hidden bg-slate-800">
+        {game.cover_url && (
+          <img
+            src={game.cover_url}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
+          />
+        )}
+        <span className="absolute left-3 top-3 rounded-full bg-slate-950/75 px-2.5 py-1 text-xs font-semibold text-violet-200 ring-1 ring-violet-300/30 backdrop-blur-sm">
+          Hidden gem
+        </span>
+        {isOpening && (
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-950/50">
+            <RefreshCw className="h-5 w-5 animate-spin text-white" />
+          </div>
+        )}
+      </div>
+
+      <div className="p-4">
+        <h3 className="line-clamp-1 text-base font-bold text-slate-50 transition-colors group-hover:text-indigo-400">
+          {game.name}
+        </h3>
+        <p className="mt-1 line-clamp-1 text-sm text-slate-400">
+          {(game.genres ?? []).slice(0, 2).join(', ')}
+        </p>
+        <div className="mt-3 flex items-center justify-between text-sm">
+          <span className="flex items-center gap-1 font-bold text-slate-50">
+            <Star className="h-4 w-4 fill-violet-500 text-violet-500" />
+            {Number(game.avgOverall ?? 0).toFixed(1)}
+          </span>
+          <span className="text-slate-400">{game.totalReviews ?? 0} review</span>
+        </div>
+      </div>
+    </button>
+  );
+};
+
+const AspectBar = ({ aspect, value }: { aspect: AspectKey; value: number }) => (
+  <div className="flex items-center gap-3">
+    <span className="w-16 shrink-0 text-xs text-slate-400">
+      {ASPECT_LABEL[aspect]}
+    </span>
+    <div className="h-2 flex-1 rounded-full bg-slate-800">
+      <div
+        className={`h-2 rounded-full ${BAR_COLOR[aspect]}`}
+        style={{ width: `${Math.min(Math.max(value, 0), 10) * 10}%` }}
+      />
+    </div>
+    <span className="w-8 shrink-0 text-right text-xs font-bold text-slate-50">
+      {value.toFixed(1)}
+    </span>
+  </div>
+);
+
+const ContrastCard = ({ item }: { item: AspectContrast }) => {
+  const { openGame, isOpening } = useOpenGame();
+  const { game, high, low } = item;
+
+  return (
+    <button
+      type="button"
+      onClick={() => openGame(game)}
+      disabled={isOpening}
+      className="flex gap-4 rounded-xl bg-slate-900 p-4 text-left outline-none ring-1 ring-white/10 transition-colors hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-70"
+    >
+      {game.cover_url ? (
+        <img
+          src={game.cover_url}
+          alt=""
+          loading="lazy"
+          className="aspect-[2/3] w-20 shrink-0 rounded-lg object-cover"
+        />
+      ) : (
+        <div className="aspect-[2/3] w-20 shrink-0 rounded-lg bg-slate-800" />
+      )}
+
+      <div className="min-w-0 flex-1">
+        <h3 className="line-clamp-1 text-base font-bold text-slate-50">
+          {game.name}
+        </h3>
+        <p className="mt-0.5 text-sm font-medium text-violet-300">
+          {ASPECT_LABEL[high]} juara, {ASPECT_LABEL[low].toLowerCase()} biasa
+        </p>
+        <div className="mt-3 space-y-2">
+          {ASPECT_TABS.map((tab) => (
+            <AspectBar
+              key={tab.key}
+              aspect={tab.key}
+              value={aspectScore(game, tab.key)}
+            />
+          ))}
+        </div>
+      </div>
+    </button>
+  );
+};
+
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+
+const SAVE_LABEL: Record<SaveState, string> = {
+  idle: 'Plan to Play',
+  saving: 'Menyimpan...',
+  saved: 'Tersimpan',
+  error: 'Gagal, coba lagi',
+};
+
+const formatReviewDate = (value: string | null) => {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+};
+
+const RecommendationBanner = ({ game }: { game: GameItem }) => {
+  const { openGame, isOpening } = useOpenGame();
+  const [saveState, setSaveState] = useState<SaveState>('idle');
+
+  const saveToLibrary = async () => {
+    if (saveState === 'saving' || saveState === 'saved') return;
+
+    try {
+      setSaveState('saving');
+      const target = isDatabaseGame(game)
+        ? game
+        : await gameService.importGame(game.igdb_id);
+      await gameService.addToLibrary(Number(target.id), 'plan_to_play');
+      setSaveState('saved');
+    } catch (error) {
+      console.error('Gagal menyimpan ke library:', error);
+      setSaveState('error');
+    }
+  };
+
+  return (
+    <div className="flex gap-5 rounded-xl bg-slate-900 p-5 ring-1 ring-white/10">
+      {game.cover_url ? (
+        <img
+          src={game.cover_url}
+          alt={game.name}
+          loading="lazy"
+          className="aspect-[2/3] w-28 shrink-0 rounded-lg object-cover sm:w-32"
+        />
+      ) : (
+        <div className="aspect-[2/3] w-28 shrink-0 rounded-lg bg-slate-800 sm:w-32" />
+      )}
+
+      <div className="flex min-w-0 flex-1 flex-col justify-center">
+        <p className="text-sm font-semibold text-violet-300">Layak dicoba</p>
+        <h3 className="mt-1 line-clamp-2 text-xl font-extrabold text-slate-50">
+          {game.name}
+        </h3>
+        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400">
+          {[
+            (game.genres ?? []).slice(0, 2).join(', '),
+            (game.platforms ?? []).slice(0, 2).join(', '),
+            game.release_year,
+          ]
+            .filter(Boolean)
+            .map((item) => (
+              <span key={item}>{item}</span>
+            ))}
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={saveToLibrary}
+            disabled={saveState === 'saving' || saveState === 'saved'}
+            className="inline-flex h-11 items-center gap-2 rounded-lg bg-indigo-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:opacity-80"
+          >
+            {saveState === 'saved' ? (
+              <Check className="h-4 w-4" />
+            ) : saveState === 'saving' ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              <Plus className="h-4 w-4" />
+            )}
+            {SAVE_LABEL[saveState]}
+          </button>
+          <button
+            type="button"
+            onClick={() => openGame(game)}
+            disabled={isOpening}
+            className="inline-flex h-11 items-center rounded-lg px-5 text-sm font-semibold text-slate-100 ring-1 ring-white/20 transition-colors hover:bg-white/10 disabled:opacity-70"
+          >
+            Detail
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ReviewCard = ({ review }: { review: RecentReview }) => {
+  const { openGame, isOpening } = useOpenGame();
+  const { game } = review;
+  const scores = [
+    { label: 'Gameplay', value: review.ratingGameplay },
+    { label: 'Story', value: review.ratingStory },
+    { label: 'Visual', value: review.ratingVisual },
+  ];
+
+  return (
+    <button
+      type="button"
+      onClick={() => openGame(game)}
+      disabled={isOpening}
+      className="flex flex-col gap-4 rounded-xl bg-slate-900 p-5 text-left outline-none ring-1 ring-white/10 transition-colors hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-70"
+    >
+      <div className="flex gap-4">
+        {game.cover_url ? (
+          <img
+            src={game.cover_url}
+            alt=""
+            loading="lazy"
+            className="aspect-[2/3] w-20 shrink-0 rounded-lg object-cover"
+          />
+        ) : (
+          <div className="aspect-[2/3] w-20 shrink-0 rounded-lg bg-slate-800" />
+        )}
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="line-clamp-1 text-base font-bold text-slate-50">
+                {game.name}
+              </h3>
+              {game.release_year && (
+                <p className="text-xs text-slate-400">{game.release_year}</p>
+              )}
+            </div>
+            <span className="flex shrink-0 items-center gap-1 font-bold text-slate-50">
+              <Star className="h-4 w-4 fill-violet-500 text-violet-500" />
+              {review.ratingOverall.toFixed(1)}
+            </span>
+          </div>
+          <p className="mt-2 line-clamp-4 text-sm leading-relaxed text-slate-300">
+            {review.reviewText}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {scores.map((score) => (
+          <span
+            key={score.label}
+            className="rounded-full px-2.5 py-1 text-xs font-medium text-slate-300 ring-1 ring-white/15"
+          >
+            {score.label} {score.value.toFixed(1)}
+          </span>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between gap-3 border-t border-white/10 pt-4 text-sm text-slate-400">
+        <span className="flex min-w-0 items-center gap-2">
+          {review.userAvatar ? (
+            <img
+              src={review.userAvatar}
+              alt=""
+              className="h-7 w-7 shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
+              {review.userName.charAt(0).toUpperCase()}
+            </span>
+          )}
+          <span className="line-clamp-1 font-semibold text-slate-100">
+            {review.userName}
+          </span>
+        </span>
+        <span className="shrink-0">{formatReviewDate(review.dateAdded)}</span>
+        <span className="shrink-0">{review.helpfulCount} berguna</span>
+      </div>
+    </button>
+  );
+};
+
+const RankRow = ({
+  game,
+  rank,
+  detail,
+}: {
+  game: Game;
+  rank: number;
+  detail: string;
+}) => {
+  const { openGame, isOpening } = useOpenGame();
+
+  return (
+    <button
+      type="button"
+      onClick={() => openGame(game)}
+      disabled={isOpening}
+      className="group flex w-full items-center gap-3 py-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-70"
+    >
+      <span className="w-5 shrink-0 text-sm font-bold text-slate-500">
+        {rank}
+      </span>
+      {game.cover_url ? (
+        <img
+          src={game.cover_url}
+          alt=""
+          loading="lazy"
+          className="aspect-[2/3] w-10 shrink-0 rounded object-cover"
+        />
+      ) : (
+        <div className="aspect-[2/3] w-10 shrink-0 rounded bg-slate-800" />
+      )}
+      <div className="min-w-0">
+        <p className="line-clamp-1 text-sm font-semibold text-slate-100 transition-colors group-hover:text-indigo-400">
+          {game.name}
+        </p>
+        <p className="text-xs text-slate-400">{detail}</p>
+      </div>
+    </button>
+  );
+};
+
+const RankColumn = ({
+  title,
+  games,
+  detail,
+}: {
+  title: string;
+  games: Game[];
+  detail: (game: Game) => string;
+}) => (
+  <div>
+    <h3 className="mb-2 border-b-2 border-indigo-500 pb-2 text-lg font-extrabold text-slate-50">
+      {title}
+    </h3>
+    <div className="divide-y divide-white/5">
+      {games.map((game, index) => (
+        <RankRow
+          key={game.id}
+          game={game}
+          rank={index + 1}
+          detail={detail(game)}
+        />
+      ))}
+    </div>
+  </div>
+);
+
 const HeroPick = ({ game, rank }: { game: Game; rank: number }) => {
   const { openGame, isOpening } = useOpenGame();
 
@@ -522,6 +975,8 @@ export default function GameList() {
   const [isLoadingRecommendations, setIsLoadingRecommendations] =
     useState(true);
   const [hasRecommendationError, setHasRecommendationError] = useState(false);
+  const [recentReviews, setRecentReviews] = useState<RecentReview[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
 
   const [recentGames, setRecentGames] = useState<Game[]>(readRecentGames);
   const [activeAspect, setActiveAspect] = useState<AspectKey>('gameplay');
@@ -575,7 +1030,6 @@ export default function GameList() {
     const timer = setTimeout(() => runSearch(query), 500);
 
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput]);
 
   const handleSearchChange = (value: string) => {
@@ -652,6 +1106,14 @@ export default function GameList() {
     loadRecommendations();
   }, [loadRecommendations]);
 
+  useEffect(() => {
+    gameService
+      .getRecentReviews(4)
+      .then(setRecentReviews)
+      .catch((error) => console.error('Gagal mengambil review terbaru:', error))
+      .finally(() => setIsLoadingReviews(false));
+  }, []);
+
   const allGames = useMemo(() => {
     const unique = new Map<Game['id'], Game>();
     [...overallGames, ...gameplayGames, ...storyGames, ...visualGames].forEach(
@@ -674,6 +1136,68 @@ export default function GameList() {
         .slice(0, 12),
     [allGames]
   );
+
+  const aspectHighlights = useMemo(() => {
+    const used = new Set<Game['id']>();
+    const order: AspectKey[] = ['gameplay', 'story', 'visual', 'story', 'gameplay'];
+
+    return order.flatMap((aspect) => {
+      const pick = allGames
+        .filter((game) => aspectScore(game, aspect) > 0)
+        .sort((a, b) => aspectScore(b, aspect) - aspectScore(a, aspect))
+        .find((game) => !used.has(game.id));
+
+      if (!pick) return [];
+
+      used.add(pick.id);
+      return [{ game: pick, aspect }];
+    });
+  }, [allGames]);
+
+  const hiddenGems = useMemo(() => {
+    const reviewed = allGames.filter((game) => (game.totalReviews ?? 0) > 0);
+    if (reviewed.length < 4) return [];
+
+    const counts = reviewed
+      .map((game) => game.totalReviews ?? 0)
+      .sort((a, b) => a - b);
+    const median = counts[Math.floor(counts.length / 2)];
+
+    return reviewed
+      .filter(
+        (game) =>
+          (game.totalReviews ?? 0) <= median &&
+          Number(game.avgOverall ?? 0) >= GEM_MIN_SCORE
+      )
+      .sort((a, b) => Number(b.avgOverall ?? 0) - Number(a.avgOverall ?? 0))
+      .slice(0, 4);
+  }, [allGames]);
+
+  const aspectContrasts = useMemo(() => {
+    const items: (AspectContrast & { gap: number })[] = [];
+
+    allGames.forEach((game) => {
+      const scores = ASPECT_TABS.map((tab) => ({
+        key: tab.key,
+        value: aspectScore(game, tab.key),
+      }));
+
+      if (scores.some((score) => score.value <= 0)) return;
+
+      const sorted = [...scores].sort((a, b) => b.value - a.value);
+      items.push({
+        game,
+        high: sorted[0].key,
+        low: sorted[2].key,
+        gap: sorted[0].value - sorted[2].value,
+      });
+    });
+
+    return items
+      .filter((item) => item.gap >= CONTRAST_MIN_GAP)
+      .sort((a, b) => b.gap - a.gap)
+      .slice(0, 3);
+  }, [allGames]);
 
   const mostReviewedGames = useMemo(
     () =>
@@ -723,7 +1247,19 @@ export default function GameList() {
       );
     }
 
-    return <GameRow games={visibleRecommendations} />;
+    const banners = visibleRecommendations.slice(0, 2);
+    const rest = visibleRecommendations.slice(2);
+
+    return (
+      <>
+        <div className="mb-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
+          {banners.map((game) => (
+            <RecommendationBanner key={getGameKey(game)} game={game} />
+          ))}
+        </div>
+        {rest.length > 0 && <GameRow games={rest} />}
+      </>
+    );
   };
 
   const renderRecommendations = () => (
@@ -875,7 +1411,76 @@ export default function GameList() {
           </Section>
         )}
 
+        {aspectHighlights.length >= 3 && (
+          <Section
+            title="Sorotan aspek"
+            subtitle="Satu game, satu keunggulan: dipilih dari rating tiap aspek."
+          >
+            <div className="grid auto-rows-[10rem] grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+              {aspectHighlights.map(({ game, aspect }, index) => {
+                const isLarge = aspectHighlights.length === 5 && index === 0;
+
+                return (
+                  <AspectTile
+                    key={game.id}
+                    game={game}
+                    aspect={aspect}
+                    large={isLarge}
+                    className={isLarge ? 'sm:col-span-2 md:row-span-2' : ''}
+                  />
+                );
+              })}
+            </div>
+          </Section>
+        )}
+
         {renderRecommendations()}
+
+        {hiddenGems.length >= 2 && (
+          <Section
+            title="Hidden gems"
+            subtitle="Nilai tinggi, tapi belum banyak yang membahasnya."
+          >
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {hiddenGems.map((game) => (
+                <GemCard key={game.id} game={game} />
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {(isLoadingReviews || recentReviews.length > 0) && (
+          <Section
+            title="Review terbaru"
+            subtitle="Dari para pemain, lengkap dengan rating tiap aspek."
+          >
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+              {isLoadingReviews
+                ? Array.from({ length: 2 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="h-52 animate-pulse rounded-xl bg-slate-800"
+                    />
+                  ))
+                : recentReviews.map((review) => (
+                    <ReviewCard key={review.id} review={review} />
+                  ))}
+            </div>
+          </Section>
+        )}
+
+        {aspectContrasts.length > 0 && (
+          <Section
+            title="Jurang antar aspek"
+            subtitle="Unggul di satu sisi, biasa saja di sisi lain."
+          >
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+              {aspectContrasts.map((item) => (
+                <ContrastCard key={item.game.id} item={item} />
+              ))}
+            </div>
+          </Section>
+        )}
 
         <Section
           title="Terbaik per aspek"
@@ -915,19 +1520,28 @@ export default function GameList() {
 
         {hasEnoughGames && (
           <Section
-            title="Baru dirilis"
-            subtitle="Rilisan terbaru yang sudah punya review."
+            title="Papan peringkat"
+            subtitle="Tiga cara melihat game yang sedang ramai."
           >
-            <GameRow games={newestGames} />
-          </Section>
-        )}
-
-        {hasEnoughGames && (
-          <Section
-            title="Paling banyak diulas"
-            subtitle="Game yang paling ramai dibahas pemain lain."
-          >
-            <GameRow games={mostReviewedGames} />
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+              <RankColumn
+                title="Rating tertinggi"
+                games={overallGames.slice(0, 5)}
+                detail={(game) =>
+                  `Overall ${Number(game.avgOverall ?? 0).toFixed(1)}`
+                }
+              />
+              <RankColumn
+                title="Paling banyak diulas"
+                games={mostReviewedGames.slice(0, 5)}
+                detail={(game) => `${game.totalReviews ?? 0} review`}
+              />
+              <RankColumn
+                title="Rilis terbaru"
+                games={newestGames.slice(0, 5)}
+                detail={(game) => `Rilis ${game.release_year ?? 'tidak diketahui'}`}
+              />
+            </div>
           </Section>
         )}
 
