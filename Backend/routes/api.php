@@ -13,6 +13,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\FollowController;
 use App\Http\Controllers\ReviewDiscussionController;
 use App\Http\Controllers\GameReleaseController;
+use App\Http\Controllers\StatisticsController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -70,4 +71,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/library', [LibraryController::class, 'index']);
     Route::post('/library', [LibraryController::class, 'addOrUpdate']);
     Route::delete('/library/{gameId}', [LibraryController::class, 'remove']);
+
+    Route::get('/statistics', [StatisticsController::class, 'index']);
 });
