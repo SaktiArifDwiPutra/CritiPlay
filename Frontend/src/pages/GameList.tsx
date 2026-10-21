@@ -792,6 +792,12 @@ const ReviewCard = ({ review }: { review: RecentReview }) => {
   );
 };
 
+const RANK_ACCENT: Record<number, string> = {
+  0: 'text-amber-400',
+  1: 'text-slate-300',
+  2: 'text-amber-600',
+};
+
 const RankRow = ({
   game,
   rank,
@@ -802,56 +808,71 @@ const RankRow = ({
   detail: string;
 }) => {
   const { openGame, isOpening } = useOpenGame();
+  const accentClass = RANK_ACCENT[rank - 1] ?? 'text-slate-500';
 
   return (
     <button
       type="button"
       onClick={() => openGame(game)}
       disabled={isOpening}
-      className="group flex w-full items-center gap-3 py-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-70"
+      className="group flex w-full items-center gap-3 rounded-lg p-2.5 text-left outline-none transition-colors hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-70"
     >
-      <span className="w-5 shrink-0 text-sm font-bold text-slate-500">
-        {rank}
+      <span
+        className={`w-6 shrink-0 text-center text-sm font-black tabular-nums ${accentClass}`}
+      >
+        {rank <= 3 ? ['🥇', '🥈', '🥉'][rank - 1] : rank}
       </span>
       {game.cover_url ? (
         <img
           src={game.cover_url}
           alt=""
           loading="lazy"
-          className="aspect-[2/3] w-10 shrink-0 rounded object-cover"
+          className="aspect-[2/3] w-10 shrink-0 rounded object-cover ring-1 ring-white/10"
         />
       ) : (
         <div className="aspect-[2/3] w-10 shrink-0 rounded bg-slate-800" />
       )}
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="line-clamp-1 text-sm font-semibold text-slate-100 transition-colors group-hover:text-indigo-400">
           {game.name}
         </p>
-        <p className="text-xs text-slate-400">{detail}</p>
+        <p className="text-xs text-slate-500">{detail}</p>
       </div>
     </button>
   );
+};
+
+const RANK_HEADER_COLOR: Record<number, string> = {
+  0: 'from-amber-500/20 to-transparent border-amber-500/60',
+  1: 'from-indigo-500/20 to-transparent border-indigo-500/60',
+  2: 'from-violet-500/20 to-transparent border-violet-500/60',
 };
 
 const RankColumn = ({
   title,
   games,
   detail,
+  index = 0,
 }: {
   title: string;
   games: Game[];
   detail: (game: Game) => string;
+  index?: number;
 }) => (
-  <div>
-    <h3 className="mb-2 border-b-2 border-indigo-500 pb-2 text-lg font-extrabold text-slate-50">
-      {title}
-    </h3>
-    <div className="divide-y divide-white/5">
-      {games.map((game, index) => (
+  <div className="rounded-xl bg-slate-900 ring-1 ring-white/10 overflow-hidden">
+    <div
+      className={`border-b bg-gradient-to-r px-4 py-3.5 ${RANK_HEADER_COLOR[index] ?? 'from-slate-700/30 to-transparent border-slate-700/60'}`}
+    >
+      <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-200">
+        {title}
+      </h3>
+    </div>
+    <div className="divide-y divide-white/5 px-1 py-1">
+      {games.map((game, idx) => (
         <RankRow
           key={game.id}
           game={game}
-          rank={index + 1}
+          rank={idx + 1}
           detail={detail(game)}
         />
       ))}
@@ -1598,34 +1619,6 @@ export default function GameList() {
           </Section>
         )}
 
-        {(releasedGames.length > 0 ||
-          upcomingGames.length > 2 ||
-          anticipatedGames.length > 0) && (
-          <Section
-            title="Radar rilis"
-            subtitle="Yang baru terbit, yang segera terbit, dan yang paling ditunggu."
-          >
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-              <ReleaseColumn
-                title="Baru rilis"
-                games={releasedGames}
-                detail={(game) => formatReleaseDate(game.release_date)}
-              />
-              <ReleaseColumn
-                title="Segera rilis"
-                games={upcomingGames.slice(2, 7)}
-                detail={(game) => formatReleaseDate(game.release_date)}
-              />
-              <ReleaseColumn
-                title="Paling dinanti"
-                games={anticipatedGames}
-                detail={(game) =>
-                  `${formatReleaseDate(game.release_date)}, ${game.hypes} menunggu`
-                }
-              />
-            </div>
-          </Section>
-        )}
 
         <Section
           title="Terbaik per aspek"
@@ -1668,8 +1661,9 @@ export default function GameList() {
             title="Papan peringkat"
             subtitle="Tiga cara melihat game yang sedang ramai."
           >
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
               <RankColumn
+                index={0}
                 title="Rating tertinggi"
                 games={overallGames.slice(0, 5)}
                 detail={(game) =>
@@ -1677,11 +1671,13 @@ export default function GameList() {
                 }
               />
               <RankColumn
+                index={1}
                 title="Paling banyak diulas"
                 games={mostReviewedGames.slice(0, 5)}
                 detail={(game) => `${game.totalReviews ?? 0} review`}
               />
               <RankColumn
+                index={2}
                 title="Rilis terbaru"
                 games={newestGames.slice(0, 5)}
                 detail={(game) => `Rilis ${game.release_year ?? 'tidak diketahui'}`}
@@ -1723,6 +1719,35 @@ export default function GameList() {
             </p>
           )}
         </Section>
+
+        {(releasedGames.length > 0 ||
+          upcomingGames.length > 2 ||
+          anticipatedGames.length > 0) && (
+          <Section
+            title="Radar rilis"
+            subtitle="Yang baru terbit, yang segera terbit, dan yang paling ditunggu."
+          >
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+              <ReleaseColumn
+                title="Baru rilis"
+                games={releasedGames}
+                detail={(game) => formatReleaseDate(game.release_date)}
+              />
+              <ReleaseColumn
+                title="Segera rilis"
+                games={upcomingGames.slice(2, 7)}
+                detail={(game) => formatReleaseDate(game.release_date)}
+              />
+              <ReleaseColumn
+                title="Paling dinanti"
+                games={anticipatedGames}
+                detail={(game) =>
+                  `${formatReleaseDate(game.release_date)}, ${game.hypes} menunggu`
+                }
+              />
+            </div>
+          </Section>
+        )}
       </>
     );
   };
