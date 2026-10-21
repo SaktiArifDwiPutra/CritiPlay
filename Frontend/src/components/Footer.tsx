@@ -10,7 +10,6 @@ export default function Footer() {
     <footer className="mt-auto border-t border-slate-800/80 bg-slate-950/80 backdrop-blur-md text-slate-400">
       <div className="mx-auto max-w-6xl px-4 pt-12 pb-8 sm:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-          {/* Brand Info */}
           <div className="space-y-4 md:col-span-1">
             <Link
               to="/"
@@ -32,7 +31,6 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Navigasi */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200">
               Navigasi
@@ -73,7 +71,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Kriteria Penilaian */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200">
               Aspek Ulasan
@@ -98,7 +95,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Komunitas & Kembali ke Atas */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200">
               Komunitas
@@ -119,7 +115,6 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom Bar */}
         <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-slate-800/60 pt-6 text-xs text-slate-500 sm:flex-row">
           <p>© {new Date().getFullYear()} CritiPlay. Hak cipta dilindungi undang-undang.</p>
           <div className="flex items-center gap-1 text-slate-500">
