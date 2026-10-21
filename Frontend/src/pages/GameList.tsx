@@ -1065,12 +1065,8 @@ export default function GameList() {
     setHasError(false);
 
     try {
-      const [overall, gameplay, story, visual] = await Promise.all([
-        gameService.getTopRatedGames('overall'),
-        gameService.getTopRatedGames('gameplay'),
-        gameService.getTopRatedGames('story'),
-        gameService.getTopRatedGames('visual'),
-      ]);
+      const { overall, gameplay, story, visual } =
+        await gameService.getTopRatedSummary();
 
       setOverallGames(overall);
       setGameplayGames(gameplay);

@@ -39,6 +39,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/games/search', [GameSearchController::class, 'search']);
     Route::post('/games/import', [GameImportController::class, 'import']);
     Route::get('/games/top-rated', [GameController::class, 'topRated']);
+    Route::get('/games/top-rated-summary', [GameController::class, 'topRatedSummary']);
+    Route::get('/games/recommendations', [GameController::class, 'recommendations']);
 
     Route::apiResource('games', GameController::class)->only(['index', 'show']);
     Route::middleware('admin')->group(function () {
