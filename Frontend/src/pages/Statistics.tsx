@@ -84,7 +84,6 @@ export default function Statistics() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
-      {/* Header & Tabs */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-6">
         <div>
           <div className="flex items-center gap-2.5">
@@ -100,7 +99,6 @@ export default function Statistics() {
           </p>
         </div>
 
-        {/* Tab Controls */}
         <div className="inline-flex rounded-xl bg-slate-900 p-1 ring-1 ring-white/10" role="tablist">
           <button
             type="button"
@@ -132,13 +130,9 @@ export default function Statistics() {
           </button>
         </div>
       </div>
-
-      {/* TAB 1: PERSONAL STATS */}
       {activeTab === 'personal' && (
         <div className="space-y-8 animate-fadeIn">
-          {/* Top KPI Cards */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {/* KPI 1 */}
             <div className="relative overflow-hidden rounded-2xl bg-slate-900 p-5 ring-1 ring-white/10">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -157,7 +151,6 @@ export default function Statistics() {
               </p>
             </div>
 
-            {/* KPI 2 */}
             <div className="relative overflow-hidden rounded-2xl bg-slate-900 p-5 ring-1 ring-white/10">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -176,7 +169,6 @@ export default function Statistics() {
               </p>
             </div>
 
-            {/* KPI 3 */}
             <div className="relative overflow-hidden rounded-2xl bg-slate-900 p-5 ring-1 ring-white/10">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -196,7 +188,6 @@ export default function Statistics() {
               </div>
             </div>
 
-            {/* KPI 4 */}
             <div className="relative overflow-hidden rounded-2xl bg-slate-900 p-5 ring-1 ring-white/10">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -218,7 +209,6 @@ export default function Statistics() {
             </div>
           </div>
 
-          {/* Section: Status Library Breakdown */}
           <div className="rounded-2xl bg-slate-900 p-6 ring-1 ring-white/10">
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-200">
               Komposisi Koleksi Game
@@ -226,8 +216,6 @@ export default function Statistics() {
             <p className="mt-1 text-xs text-slate-400">
               Distribusi status permainan di library kamu.
             </p>
-
-            {/* Progress Segmented Bar */}
             <div className="mt-5 flex h-3.5 w-full overflow-hidden rounded-full bg-slate-800">
               {lib.total > 0 ? (
                 <>
@@ -256,8 +244,6 @@ export default function Statistics() {
                 <div className="w-full bg-slate-800" />
               )}
             </div>
-
-            {/* Status Legend Pills */}
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div className="flex items-center gap-2 rounded-xl bg-slate-950/60 p-3 ring-1 ring-white/5">
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
@@ -290,9 +276,7 @@ export default function Statistics() {
             </div>
           </div>
 
-          {/* Section: Aspect Scores & Preferences */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* Rating Per Aspect Kamu */}
             <div className="rounded-2xl bg-slate-900 p-6 ring-1 ring-white/10">
               <h3 className="text-sm font-bold uppercase tracking-wider text-slate-200">
                 Kecenderungan Rating Aspek Kamu
@@ -302,7 +286,6 @@ export default function Statistics() {
               </p>
 
               <div className="mt-6 space-y-4">
-                {/* Gameplay */}
                 <div>
                   <div className="flex justify-between text-xs font-semibold">
                     <span className="text-indigo-300">Gameplay & Mekanik</span>
@@ -318,7 +301,6 @@ export default function Statistics() {
                   </div>
                 </div>
 
-                {/* Story */}
                 <div>
                   <div className="flex justify-between text-xs font-semibold">
                     <span className="text-purple-300">Story & Narasi</span>
@@ -334,7 +316,6 @@ export default function Statistics() {
                   </div>
                 </div>
 
-                {/* Visual */}
                 <div>
                   <div className="flex justify-between text-xs font-semibold">
                     <span className="text-cyan-300">Visual & Grafis</span>
@@ -352,7 +333,6 @@ export default function Statistics() {
               </div>
             </div>
 
-            {/* Genre & Platform Favorit */}
             <div className="rounded-2xl bg-slate-900 p-6 ring-1 ring-white/10 space-y-6">
               <div>
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-200">
@@ -403,7 +383,6 @@ export default function Statistics() {
             </div>
           </div>
 
-          {/* Highest Rated Games by User */}
           {personal.highest_rated_games.length > 0 && (
             <div className="rounded-2xl bg-slate-900 p-6 ring-1 ring-white/10">
               <div className="flex items-center justify-between mb-4">
@@ -459,26 +438,9 @@ export default function Statistics() {
         </div>
       )}
 
-      {/* TAB 2: COMMUNITY STATS */}
       {activeTab === 'community' && (
         <div className="space-y-8 animate-fadeIn">
-          {/* Community KPI Row */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-2xl bg-slate-900 p-5 ring-1 ring-white/10">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Katalog Game
-              </span>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-3xl font-extrabold text-white">
-                  {community.overview.total_catalog_games}
-                </span>
-                <span className="text-xs text-slate-400">judul</span>
-              </div>
-              <p className="mt-1 text-xs text-indigo-400">
-                Tersedia di database CritiPlay
-              </p>
-            </div>
-
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-2xl bg-slate-900 p-5 ring-1 ring-white/10">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 Game Diulas
@@ -525,7 +487,6 @@ export default function Statistics() {
             </div>
           </div>
 
-          {/* Aspect Leaders (Juara per Aspek) */}
           <div className="rounded-2xl bg-slate-900 p-6 ring-1 ring-white/10">
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-200">
               Jawara Rating per Aspek Komunitas
@@ -535,28 +496,24 @@ export default function Statistics() {
             </p>
 
             <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {/* Leader: Overall */}
               <LeaderCard
                 title="Juara Umum (Overall)"
                 aspect="Overall"
                 badgeColor="border-amber-500/50 bg-amber-500/10 text-amber-300"
                 leader={community.aspect_leaders.overall}
               />
-              {/* Leader: Gameplay */}
               <LeaderCard
                 title="Gameplay Terbaik"
                 aspect="Gameplay"
                 badgeColor="border-indigo-500/50 bg-indigo-500/10 text-indigo-300"
                 leader={community.aspect_leaders.gameplay}
               />
-              {/* Leader: Story */}
               <LeaderCard
                 title="Story Paling Memikat"
                 aspect="Story"
                 badgeColor="border-purple-500/50 bg-purple-500/10 text-purple-300"
                 leader={community.aspect_leaders.story}
               />
-              {/* Leader: Visual */}
               <LeaderCard
                 title="Visual & Grafis Terindah"
                 aspect="Visual"
@@ -566,9 +523,7 @@ export default function Statistics() {
             </div>
           </div>
 
-          {/* Community Aspect Averages & Rating Distribution */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* Rata-rata Nilai Aspek Komunitas */}
             <div className="rounded-2xl bg-slate-900 p-6 ring-1 ring-white/10">
               <h3 className="text-sm font-bold uppercase tracking-wider text-slate-200">
                 Rata-rata Skor Aspek Komunitas
@@ -632,7 +587,6 @@ export default function Statistics() {
               </div>
             </div>
 
-            {/* Sebaran Rating */}
             <div className="rounded-2xl bg-slate-900 p-6 ring-1 ring-white/10">
               <h3 className="text-sm font-bold uppercase tracking-wider text-slate-200">
                 Sebaran Rating Ulasan
@@ -668,7 +622,6 @@ export default function Statistics() {
             </div>
           </div>
 
-          {/* Most Reviewed Games */}
           {community.most_reviewed_games.length > 0 && (
             <div className="rounded-2xl bg-slate-900 p-6 ring-1 ring-white/10">
               <div className="flex items-center justify-between mb-4">
