@@ -39,6 +39,65 @@ class ReviewController extends Controller
         return response()->json($reviews);
     }
 
+    public function recent(Request $request)
+    {
+        $validated = $request->validate([
+            'limit' => 'nullable|integer|min:1|max:12',
+        ]);
+
+        $limit = $validated['limit'] ?? 4;
+        $currentUserId = $request->user()?->id;
+
+        $reviews = Review::whereNotNull('review_text')
+            ->whereRaw("TRIM(review_text) != ''")
+            ->whereHas('game')
+            ->with([
+                'user:id,name,avatar',
+                'game:id,igdb_id,name,cover_url,release_year,genres,platforms,summary,avg_gameplay,avg_story,avg_visual,avg_overall,total_reviews',
+            ])
+            ->withCount('helpfulVotes')
+            ->with('helpfulVotes')
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get()
+            ->map(function ($review) use ($currentUserId) {
+                return [
+                    'id'             => (string) $review->id,
+                    'gameId'         => (string) $review->game_id,
+                    'userId'         => (string) $review->user_id,
+                    'userName'       => $review->user->name ?? 'Unknown',
+                    'userAvatar'     => $review->user && $review->user->avatar
+                        ? (str_starts_with($review->user->avatar, 'http') ? $review->user->avatar : asset('storage/' . $review->user->avatar))
+                        : null,
+                    'ratingGameplay' => (float) $review->rating_gameplay,
+                    'ratingStory'    => (float) $review->rating_story,
+                    'ratingVisual'   => (float) $review->rating_visual,
+                    'ratingOverall'  => (float) $review->rating_overall,
+                    'reviewText'     => $review->review_text,
+                    'helpfulCount'   => (int) ($review->helpful_votes_count ?? $review->helpfulVotes->count()),
+                    'isHelpfulByMe'  => $currentUserId ? $review->helpfulVotes->contains('user_id', $currentUserId) : false,
+                    'dateAdded'      => $review->created_at?->toISOString(),
+                    'game'           => $review->game ? [
+                        'id'           => (string) $review->game->id,
+                        'igdb_id'      => $review->game->igdb_id,
+                        'name'         => $review->game->name,
+                        'cover_url'    => $review->game->cover_url,
+                        'release_year' => $review->game->release_year,
+                        'genres'       => $review->game->genres ?? [],
+                        'platforms'    => $review->game->platforms ?? [],
+                        'summary'      => $review->game->summary,
+                        'avgGameplay'  => (float) $review->game->avg_gameplay,
+                        'avgStory'     => (float) $review->game->avg_story,
+                        'avgVisual'    => (float) $review->game->avg_visual,
+                        'avgOverall'   => (float) $review->game->avg_overall,
+                        'totalReviews' => (int) $review->game->total_reviews,
+                    ] : null,
+                ];
+            });
+
+        return response()->json($reviews);
+    }
+
     public function store(Request $request)
     {
         $request->validate([

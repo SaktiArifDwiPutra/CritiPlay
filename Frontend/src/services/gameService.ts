@@ -1,12 +1,6 @@
 import type { Game, ExternalGame } from '../types';
-import { authService } from './authService'; // Import authService
+import { authService } from './authService'; 
 
-// ==========================================
-// BENTUK DATA MENTAH DARI BACKEND
-// Backend mengirim field dengan gaya berbeda-beda
-// (snake_case di import/search, camelCase di top-rated),
-// jadi dua-duanya diterima di sini.
-// ==========================================
 interface RawGame {
   id: string | number;
   igdb_id?: number | null;
@@ -37,18 +31,12 @@ interface RawExternalGame {
 
 const API_URL = 'http://127.0.0.1:8000/api/games';
 
-// Fungsi untuk menyelipkan Token di setiap request
 const getHeaders = () => ({
   'Content-Type': 'application/json',
   'Accept': 'application/json',
   'Authorization': `Bearer ${authService.getToken()}`
 });
 
-// ==========================================
-// MAPPER: data mentah backend -> Game
-// Dipakai di semua fungsi supaya bentuk data selalu sama
-// (cover_url, genres, platforms, rating selalu ada).
-// ==========================================
 const toNumber = (value: number | string | null | undefined): number =>
   Number(value ?? 0);
 
@@ -68,13 +56,9 @@ const mapGame = (raw: RawGame): Game => ({
   totalReviews: toNumber(raw.totalReviews)
 });
 
-// Response bisa berupa { game: {...} } atau langsung {...}
 const unwrapGame = (data: RawGame | { game: RawGame }): RawGame =>
   'game' in data ? data.game : data;
 
-// ==========================================
-// AMBIL GAME DARI DATABASE BERDASARKAN ID
-// ==========================================
 const getGameById = async (id: string): Promise<Game | undefined> => {
   const response = await fetch(`${API_URL}/${id}`, {
     headers: getHeaders()
@@ -85,11 +69,6 @@ const getGameById = async (id: string): Promise<Game | undefined> => {
   return mapGame(unwrapGame(await response.json()));
 };
 
-// ==========================================
-// PETA igdb_id -> id database
-// Dipakai untuk mengenali hasil search yang sudah ada di database.
-// Kalau gagal, return Map kosong (search tetap jalan seperti biasa).
-// ==========================================
 const fetchDatabaseIdsByIgdbId = async (): Promise<Map<number, string>> => {
   const idMap = new Map<number, string>();
 
@@ -132,23 +111,46 @@ const shuffle = <T>(items: T[]): T[] => {
   return copy;
 };
 
+interface RawReview {
+  id: string | number;
+  game?: RawGame | null;
+  userName: string;
+  userAvatar?: string | null;
+  ratingGameplay?: number | string | null;
+  ratingStory?: number | string | null;
+  ratingVisual?: number | string | null;
+  ratingOverall?: number | string | null;
+  reviewText?: string | null;
+  helpfulCount?: number | string | null;
+  dateAdded?: string | null;
+}
+
+export interface RecentReview {
+  id: string;
+  game: Game;
+  userName: string;
+  userAvatar: string | null;
+  ratingGameplay: number;
+  ratingStory: number;
+  ratingVisual: number;
+  ratingOverall: number;
+  reviewText: string;
+  helpfulCount: number;
+  dateAdded: string | null;
+}
+
+const LIBRARY_URL = 'http://127.0.0.1:8000/api/library';
+const REVIEWS_URL = 'http://127.0.0.1:8000/api/reviews';
+
 export const gameService = {
   getAllGames: async (): Promise<Game[]> => {
     const response = await fetch(API_URL, { headers: getHeaders() });
-    // Jika token tidak valid / ditolak, kembalikan array kosong agar React tidak crash
     if (!response.ok) return [];
     return response.json();
   },
 
   getGameById,
 
-  // ==========================================
-  // SEARCH
-  // Hasil dari IGDB dicocokkan dengan database lewat igdb_id.
-  // Kalau game sudah ada di database, yang dikembalikan adalah
-  // data Game lengkap (id + rating + total review).
-  // Kalau belum, yang dikembalikan tetap ExternalGame biasa.
-  // ==========================================
   searchGames: async (query: string): Promise<(ExternalGame | Game)[]> => {
     const response = await fetch(
       `${API_URL}/search?q=${encodeURIComponent(query)}`,
@@ -180,7 +182,6 @@ export const gameService = {
       externalGames.map(async (externalGame) => {
         const databaseId = databaseIds.get(externalGame.igdb_id);
 
-        // Belum ada di database -> tampilkan apa adanya
         if (!databaseId) return externalGame;
 
         try {
@@ -226,6 +227,48 @@ export const gameService = {
     });
 
     return shuffle(games).slice(0, limit);
+  },
+
+  getRecentReviews: async (limit = 4): Promise<RecentReview[]> => {
+    const response = await fetch(
+      `${REVIEWS_URL}/recent?limit=${encodeURIComponent(limit)}`,
+      { headers: getHeaders() }
+    );
+
+    if (!response.ok) return [];
+
+    const reviews: RawReview[] = await response.json();
+
+    return reviews
+      .filter((review): review is RawReview & { game: RawGame } => Boolean(review.game))
+      .map((review): RecentReview => ({
+        id: String(review.id),
+        game: mapGame(review.game),
+        userName: review.userName,
+        userAvatar: review.userAvatar ?? null,
+        ratingGameplay: toNumber(review.ratingGameplay),
+        ratingStory: toNumber(review.ratingStory),
+        ratingVisual: toNumber(review.ratingVisual),
+        ratingOverall: toNumber(review.ratingOverall),
+        reviewText: review.reviewText ?? '',
+        helpfulCount: toNumber(review.helpfulCount),
+        dateAdded: review.dateAdded ?? null
+      }));
+  },
+
+  addToLibrary: async (
+    gameId: number,
+    status: 'plan_to_play' | 'playing' | 'completed' | 'dropped'
+  ): Promise<void> => {
+    const response = await fetch(LIBRARY_URL, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ game_id: gameId, status })
+    });
+
+    if (!response.ok) {
+      throw new Error('Gagal menyimpan ke library');
+    }
   },
 
   importGame: async (igdbId: number): Promise<Game> => {

@@ -46,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('games/{id}', [GameController::class, 'destroy']);
     });
     Route::get('games/{game}/reviews', [ReviewController::class, 'getByGame']);
+    Route::get('/reviews/recent', [ReviewController::class, 'recent']);
     Route::post('reviews', [ReviewController::class, 'store']);
     Route::put('reviews/{id}', [ReviewController::class, 'update']);
     Route::delete('reviews/{id}', [ReviewController::class, 'destroy']);
