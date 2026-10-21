@@ -363,18 +363,77 @@ export const gameService = {
     return data.map(mapGame);
   },
 
+  getMostPlayed: async (limit = 5): Promise<(Game & { playCount: number })[]> => {
+    const response = await fetch(
+      `${API_URL}/most-played?limit=${limit}`,
+      { headers: getHeaders() }
+    );
+
+    if (!response.ok) return [];
+
+    const data: (RawGame & { playCount?: number })[] = await response.json();
+
+    return data.map((raw) => ({
+      ...mapGame(raw),
+      playCount: Number(raw.playCount ?? 0),
+    }));
+  },
+
+  getReleasesSummary: async (
+    recentLimit = 5,
+    upcomingLimit = 7,
+    anticipatedLimit = 5
+  ): Promise<{
+    recent: ReleaseGame[];
+    upcoming: ReleaseGame[];
+    anticipated: ReleaseGame[];
+  }> => {
+    const response = await fetch(
+      `${API_URL}/releases-summary?recent_limit=${recentLimit}&upcoming_limit=${upcomingLimit}&anticipated_limit=${anticipatedLimit}`,
+      { headers: getHeaders() }
+    );
+
+    if (!response.ok) {
+      return { recent: [], upcoming: [], anticipated: [] };
+    }
+
+    const data: {
+      recent?: RawReleaseGame[];
+      upcoming?: RawReleaseGame[];
+      anticipated?: RawReleaseGame[];
+    } = await response.json();
+
+    const mapRelease = (game: RawReleaseGame): ReleaseGame => ({
+      igdb_id: Number(game.igdb_id),
+      name: game.name,
+      cover_url: game.cover_url ?? null,
+      release_year: game.release_year ?? null,
+      genres: toStringArray(game.genres),
+      platforms: toStringArray(game.platforms),
+      release_date: game.release_date ?? null,
+      hypes: Number(game.hypes ?? 0),
+    });
+
+    return {
+      recent: (data.recent ?? []).map(mapRelease),
+      upcoming: (data.upcoming ?? []).map(mapRelease),
+      anticipated: (data.anticipated ?? []).map(mapRelease),
+    };
+  },
+
   getTopRatedSummary: async (): Promise<{
     overall: Game[];
     gameplay: Game[];
     story: Game[];
     visual: Game[];
+    mostPlayed: (Game & { playCount: number })[];
   }> => {
     const response = await fetch(`${API_URL}/top-rated-summary`, {
       headers: getHeaders()
     });
 
     if (!response.ok) {
-      return { overall: [], gameplay: [], story: [], visual: [] };
+      return { overall: [], gameplay: [], story: [], visual: [], mostPlayed: [] };
     }
 
     const data: {
@@ -382,6 +441,7 @@ export const gameService = {
       gameplay?: RawGame[];
       story?: RawGame[];
       visual?: RawGame[];
+      mostPlayed?: (RawGame & { playCount?: number })[];
     } = await response.json();
 
     return {
@@ -389,6 +449,10 @@ export const gameService = {
       gameplay: (data.gameplay ?? []).map(mapGame),
       story: (data.story ?? []).map(mapGame),
       visual: (data.visual ?? []).map(mapGame),
+      mostPlayed: (data.mostPlayed ?? []).map((raw) => ({
+        ...mapGame(raw),
+        playCount: Number(raw.playCount ?? 0),
+      })),
     };
   },
 };

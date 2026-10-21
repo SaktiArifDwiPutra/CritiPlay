@@ -6,6 +6,7 @@ use App\Models\Game;
 use App\Services\IgdbService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class GameController extends Controller
@@ -96,6 +97,30 @@ class GameController extends Controller
         return response()->json($games);
     }
 
+    // Most played (berdasarkan jumlah user yang punya status playing/completed)
+    public function mostPlayed(Request $request)
+    {
+        $limit = min(max((int) $request->query('limit', 5), 1), 20);
+
+        $games = Game::select('games.*')
+            ->leftJoin('game_user', function ($join) {
+                $join->on('games.id', '=', 'game_user.game_id')
+                    ->whereIn('game_user.status', ['playing', 'completed']);
+            })
+            ->selectRaw('COUNT(game_user.user_id) as play_count')
+            ->groupBy('games.id')
+            ->orderByDesc('play_count')
+            ->orderByDesc('total_reviews')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($game) => array_merge(
+                $this->formatGame($game),
+                ['playCount' => (int) $game->play_count]
+            ));
+
+        return response()->json($games);
+    }
+
     // Top rated summary (menggabungkan 4 kategori dalam 1 request)
     public function topRatedSummary()
     {
@@ -114,6 +139,23 @@ class GameController extends Controller
                 ->get()
                 ->map(fn ($game) => $this->formatGame($game));
         }
+
+        // Sertakan 5 game paling banyak dimainkan langsung di dalam summary
+        $result['mostPlayed'] = Game::select('games.*')
+            ->leftJoin('game_user', function ($join) {
+                $join->on('games.id', '=', 'game_user.game_id')
+                    ->whereIn('game_user.status', ['playing', 'completed']);
+            })
+            ->selectRaw('COUNT(game_user.user_id) as play_count')
+            ->groupBy('games.id')
+            ->orderByDesc('play_count')
+            ->orderByDesc('total_reviews')
+            ->limit(5)
+            ->get()
+            ->map(fn ($game) => array_merge(
+                $this->formatGame($game),
+                ['playCount' => (int) $game->play_count]
+            ));
 
         return response()->json($result);
     }

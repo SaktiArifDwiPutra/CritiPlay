@@ -47,4 +47,26 @@ class IgdbService
         ])->withBody($body, 'text/plain')
           ->post($this->baseUrl . '/' . $endpoint);
     }
+
+    public function poolRequests(array $requests)
+    {
+        $token = $this->getAccessToken();
+        $headers = [
+            'Client-ID' => $this->clientId,
+            'Authorization' => 'Bearer ' . $token,
+            'Content-Type' => 'text/plain'
+        ];
+
+        return Http::pool(function ($pool) use ($requests, $headers) {
+            $poolCalls = [];
+            foreach ($requests as $key => $req) {
+                $endpoint = is_array($req) ? ($req['endpoint'] ?? 'games') : 'games';
+                $body = is_array($req) ? $req['body'] : $req;
+                $poolCalls[$key] = $pool->withHeaders($headers)
+                    ->withBody($body, 'text/plain')
+                    ->post($this->baseUrl . '/' . $endpoint);
+            }
+            return $poolCalls;
+        });
+    }
 }

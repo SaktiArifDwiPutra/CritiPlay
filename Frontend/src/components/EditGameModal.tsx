@@ -18,11 +18,11 @@ export default function EditGameModal({ isOpen, onClose, game, onUpdate }: EditG
   // Mengisi form dengan data game saat ini setiap kali modal dibuka
   useEffect(() => {
     if (isOpen && game) {
-      setTitle(game.title);
-      setCoverImage(game.coverImage);
-      setDeveloper(game.developer);
-      setReleaseDate(game.releaseDate);
-      setGenreInput(game.genres.join(', '));
+      setTitle(game.name);
+      setCoverImage(game.cover_url ?? '');
+      setDeveloper('');
+      setReleaseDate(game.release_year ?? '');
+      setGenreInput((game.genres ?? []).join(', '));
     }
   }, [isOpen, game]);
 
@@ -32,10 +32,9 @@ export default function EditGameModal({ isOpen, onClose, game, onUpdate }: EditG
     e.preventDefault();
     const genres = genreInput.split(',').map((g) => g.trim()).filter(Boolean);
     onUpdate({
-      title,
-      coverImage,
-      developer,
-      releaseDate,
+      name: title,
+      cover_url: coverImage || null,
+      release_year: releaseDate || null,
       genres: genres.length > 0 ? genres : ['Action']
     });
   };

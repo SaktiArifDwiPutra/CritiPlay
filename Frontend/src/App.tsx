@@ -5,6 +5,7 @@ import Statistics from './pages/Statistics';
 import AuthPage from './pages/AuthPage';
 import ProfilePage from './pages/ProfilePage';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import { authService } from './services/authService';
 import AdminDashboard from './pages/AdminDashboard';
 import GoogleCallback from './pages/GoogleCallback';
@@ -14,7 +15,7 @@ import VerifyOtp from './pages/VerifyOtp';
 import Library from './pages/Library';
 import PublicProfilePage from './pages/PublicProfilePage';
 
-// 2. Modifikasi ProtectedRoute untuk membungkus halaman dengan Navbar
+// 2. Modifikasi ProtectedRoute untuk membungkus halaman dengan Navbar dan Footer
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
   const token = authService.getToken();
   if (!token) {
@@ -22,12 +23,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
   }
   
   return (
-    <>
+    <div className="flex min-h-screen flex-col">
       <Navbar />
-      <div className="px-4 sm:px-8 pb-12">
+      <div className="flex-1 px-4 sm:px-8 pb-12">
         {children}
       </div>
-    </>
+      <Footer />
+    </div>
   );
 };
 

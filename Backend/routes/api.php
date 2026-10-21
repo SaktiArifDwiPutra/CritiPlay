@@ -41,7 +41,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/games/import', [GameImportController::class, 'import']);
     Route::get('/games/top-rated', [GameController::class, 'topRated']);
     Route::get('/games/top-rated-summary', [GameController::class, 'topRatedSummary']);
+    Route::get('/games/most-played', [GameController::class, 'mostPlayed']);
     Route::get('/games/recommendations', [GameController::class, 'recommendations']);
+    Route::get('/games/releases-summary', [GameReleaseController::class, 'summary']);
+    Route::get('/games/releases/summary', [GameReleaseController::class, 'summary']);
     Route::get('/games/releases/{type}', [GameReleaseController::class, 'index'])
         ->whereIn('type', ['recent', 'upcoming', 'anticipated']);
 

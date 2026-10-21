@@ -848,15 +848,15 @@ const RANK_HEADER_COLOR: Record<number, string> = {
   2: 'from-violet-500/20 to-transparent border-violet-500/60',
 };
 
-const RankColumn = ({
+const RankColumn = <T extends Game>({
   title,
   games,
   detail,
   index = 0,
 }: {
   title: string;
-  games: Game[];
-  detail: (game: Game) => string;
+  games: T[];
+  detail: (game: T) => string;
   index?: number;
 }) => (
   <div className="rounded-xl bg-slate-900 ring-1 ring-white/10 overflow-hidden">
@@ -1096,9 +1096,10 @@ export default function GameList() {
   const [hasRecommendationError, setHasRecommendationError] = useState(false);
   const [recentReviews, setRecentReviews] = useState<RecentReview[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
-    const [releasedGames, setReleasedGames] = useState<ReleaseGame[]>([]);
+  const [releasedGames, setReleasedGames] = useState<ReleaseGame[]>([]);
   const [upcomingGames, setUpcomingGames] = useState<ReleaseGame[]>([]);
   const [anticipatedGames, setAnticipatedGames] = useState<ReleaseGame[]>([]);
+  const [mostPlayedGames, setMostPlayedGames] = useState<(Game & { playCount: number })[]>([]);
 
   const [recentGames, setRecentGames] = useState<Game[]>(readRecentGames);
   const [activeAspect, setActiveAspect] = useState<AspectKey>('gameplay');
@@ -1187,13 +1188,16 @@ export default function GameList() {
     setHasError(false);
 
     try {
-      const { overall, gameplay, story, visual } =
+      const { overall, gameplay, story, visual, mostPlayed } =
         await gameService.getTopRatedSummary();
 
       setOverallGames(overall);
       setGameplayGames(gameplay);
       setStoryGames(story);
       setVisualGames(visual);
+      if (mostPlayed) {
+        setMostPlayedGames(mostPlayed);
+      }
     } catch (error) {
       console.error('Gagal mengambil rating terbaik:', error);
       setHasError(true);
@@ -1233,17 +1237,14 @@ export default function GameList() {
   }, []);
 
   useEffect(() => {
-    Promise.allSettled([
-      gameService.getReleases('recent', 5),
-      gameService.getReleases('upcoming', 7),
-      gameService.getReleases('anticipated', 5),
-    ]).then(([recent, upcoming, anticipated]) => {
-      if (recent.status === 'fulfilled') setReleasedGames(recent.value);
-      if (upcoming.status === 'fulfilled') setUpcomingGames(upcoming.value);
-      if (anticipated.status === 'fulfilled') {
-        setAnticipatedGames(anticipated.value);
-      }
-    });
+    gameService
+      .getReleasesSummary(5, 7, 5)
+      .then(({ recent, upcoming, anticipated }) => {
+        setReleasedGames(recent);
+        setUpcomingGames(upcoming);
+        setAnticipatedGames(anticipated);
+      })
+      .catch((error) => console.error('Gagal mengambil ringkasan rilis:', error));
   }, []);
 
   const allGames = useMemo(() => {
@@ -1260,14 +1261,6 @@ export default function GameList() {
       .filter((game) => !reviewedIgdbIds.has(game.igdb_id))
       .slice(0, 12);
   }, [recommendedGames, allGames]);
-
-  const newestGames = useMemo(
-    () =>
-      [...allGames]
-        .sort((a, b) => Number(b.release_year ?? 0) - Number(a.release_year ?? 0))
-        .slice(0, 12),
-    [allGames]
-  );
 
   const aspectHighlights = useMemo(() => {
     const used = new Set<Game['id']>();
@@ -1678,9 +1671,9 @@ export default function GameList() {
               />
               <RankColumn
                 index={2}
-                title="Rilis terbaru"
-                games={newestGames.slice(0, 5)}
-                detail={(game) => `Rilis ${game.release_year ?? 'tidak diketahui'}`}
+                title="Paling banyak dimainkan"
+                games={mostPlayedGames}
+                detail={(game) => `${game.playCount ?? 0} pemain`}
               />
             </div>
           </Section>

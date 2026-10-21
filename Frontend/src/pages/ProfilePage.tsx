@@ -1,21 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
-  User,
   Mail,
   Calendar,
-  Users,
   Gamepad2,
-  Star,
   Trophy,
   Sparkles,
   Settings,
   Activity,
-  CheckCircle2,
-  Clock,
-  XCircle,
   Plus,
-  Trash2,
   Loader2,
   Camera,
   X,
@@ -107,7 +100,7 @@ export default function ProfilePage() {
   const [followers, setFollowers] = useState<SearchUser[]>([]);
   const [following, setFollowing] = useState<SearchUser[]>([]);
   const [socialModalType, setSocialModalType] = useState<'followers' | 'following' | null>(null);
-  const [isSocialLoading, setIsSocialLoading] = useState(false);
+  const [, setIsSocialLoading] = useState(false);
 
   // Showcase / Favorite Games state
   const [favoriteGames, setFavoriteGames] = useState<LibraryGame[]>([]);
