@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 
@@ -156,23 +157,39 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
+        // 1 Query agregasi untuk status library
+        $statusCounts = DB::table('game_user')
+            ->where('user_id', $user->id)
+            ->select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
         $libraryStats = [
-            'total_games'  => $user->games()->count(),
-            'completed'    => $user->games()->wherePivot('status', 'completed')->count(),
-            'playing'      => $user->games()->wherePivot('status', 'playing')->count(),
-            'plan_to_play' => $user->games()->wherePivot('status', 'plan_to_play')->count(),
-            'dropped'      => $user->games()->wherePivot('status', 'dropped')->count(),
+            'total_games'  => (int) $statusCounts->sum(),
+            'completed'    => (int) ($statusCounts['completed'] ?? 0),
+            'playing'      => (int) ($statusCounts['playing'] ?? 0),
+            'plan_to_play' => (int) ($statusCounts['plan_to_play'] ?? 0),
+            'dropped'      => (int) ($statusCounts['dropped'] ?? 0),
         ];
 
-        $totalReviews = $user->reviews()->count();
+        // 1 Query agregasi untuk seluruh statistik review
+        $reviewStats = DB::table('reviews')
+            ->where('user_id', $user->id)
+            ->selectRaw('count(*) as total_reviews, avg(rating_gameplay) as avg_gameplay, avg(rating_story) as avg_story, avg(rating_visual) as avg_visual, avg(rating_overall) as avg_overall')
+            ->first();
 
         $avgRatings = [
-            'gameplay' => round((float) $user->reviews()->avg('rating_gameplay'), 1) ?: 0,
-            'story'    => round((float) $user->reviews()->avg('rating_story'), 1) ?: 0,
-            'visual'   => round((float) $user->reviews()->avg('rating_visual'), 1) ?: 0,
-            'overall'  => round((float) $user->reviews()->avg('rating_overall'), 1) ?: 0,
+            'gameplay' => round((float) ($reviewStats->avg_gameplay ?? 0), 1),
+            'story'    => round((float) ($reviewStats->avg_story ?? 0), 1),
+            'visual'   => round((float) ($reviewStats->avg_visual ?? 0), 1),
+            'overall'  => round((float) ($reviewStats->avg_overall ?? 0), 1),
         ];
 
+        // Followers & Following counts
+        $followersCount = $user->followers()->count();
+        $followingCount = $user->following()->count();
+
+        // Recent Activity Games
         $recentGames = $user->games()
             ->orderByPivot('updated_at', 'desc')
             ->limit(4)
@@ -180,15 +197,17 @@ class AuthController extends Controller
 
         return response()->json([
             'user' => [
-                'id'        => $user->id,
-                'name'      => $user->name,
-                'email'     => $user->email,
-                'avatar'    => $user->avatar, 
-                'joined_at' => $user->created_at->format('d M Y'),
+                'id'              => $user->id,
+                'name'            => $user->name,
+                'email'           => $user->email,
+                'avatar'          => $user->avatar,
+                'joined_at'       => $user->created_at->format('d M Y'),
+                'followers_count' => $followersCount,
+                'following_count' => $followingCount,
             ],
             'stats' => [
                 'library'       => $libraryStats,
-                'total_reviews' => $totalReviews,
+                'total_reviews' => (int) ($reviewStats->total_reviews ?? 0),
                 'avg_ratings'   => $avgRatings,
             ],
             'recent_activity' => $recentGames,

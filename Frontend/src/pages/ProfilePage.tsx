@@ -41,6 +41,8 @@ type ProfileData = {
     email: string;
     avatar: string | null;
     joined_at: string;
+    followers_count?: number;
+    following_count?: number;
   };
   stats: {
     library: LibraryStats;
@@ -100,7 +102,7 @@ export default function ProfilePage() {
   const [followers, setFollowers] = useState<SearchUser[]>([]);
   const [following, setFollowing] = useState<SearchUser[]>([]);
   const [socialModalType, setSocialModalType] = useState<'followers' | 'following' | null>(null);
-  const [, setIsSocialLoading] = useState(false);
+  const [isSocialLoading, setIsSocialLoading] = useState(false);
 
   // Showcase / Favorite Games state
   const [favoriteGames, setFavoriteGames] = useState<LibraryGame[]>([]);
@@ -109,52 +111,79 @@ export default function ProfilePage() {
   const [isLibraryLoading, setIsLibraryLoading] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadProfile = async () => {
       try {
         const data: ProfileData = await authService.getProfile();
+        if (!isMounted) return;
         setProfile(data);
         setName(data.user.name);
         setEmail(data.user.email);
         setAvatar(data.user.avatar);
-
-        // Load social info
-        try {
-          setIsSocialLoading(true);
-          const [followersData, followingData] = await Promise.all([
-            userService.getFollowers(String(data.user.id)),
-            userService.getFollowing(String(data.user.id)),
-          ]);
-          setFollowers(followersData);
-          setFollowing(followingData);
-        } catch (socialError) {
-          console.error('Gagal mengambil followers/following:', socialError);
-        } finally {
-          setIsSocialLoading(false);
-        }
-
-        // Load favorite games from localStorage or initial recent activity
-        const savedFavIds = localStorage.getItem(`critiplay_favs_${data.user.id}`);
-        if (savedFavIds) {
-          try {
-            const parsedIds: (number | string)[] = JSON.parse(savedFavIds);
-            const libraryGames = await libraryService.getLibrary('all');
-            setAllLibraryGames(libraryGames);
-            const favs = libraryGames.filter((g) => parsedIds.includes(g.id));
-            setFavoriteGames(favs);
-          } catch (e) {
-            console.error('Error parsing favs:', e);
-          }
-        }
       } catch (err) {
+        if (!isMounted) return;
         console.error(err);
         setError('Gagal mengambil data profile.');
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  // Background load favorite games from localStorage without blocking initial page load
+  useEffect(() => {
+    if (!profile) return;
+    const savedFavIds = localStorage.getItem(`critiplay_favs_${profile.user.id}`);
+    if (savedFavIds) {
+      try {
+        const parsedIds: (number | string)[] = JSON.parse(savedFavIds);
+        libraryService
+          .getLibrary('all')
+          .then((libraryGames) => {
+            setAllLibraryGames(libraryGames);
+            const favs = libraryGames.filter((g) => parsedIds.includes(g.id));
+            setFavoriteGames(favs);
+          })
+          .catch((e) => console.error('Error loading favs:', e));
+      } catch (e) {
+        console.error('Error parsing favs:', e);
+      }
+    }
+  }, [profile?.user.id]);
+
+  const handleOpenSocialModal = async (type: 'followers' | 'following') => {
+    setSocialModalType(type);
+    if (!profile) return;
+
+    if (type === 'followers' && followers.length === 0) {
+      setIsSocialLoading(true);
+      try {
+        const data = await userService.getFollowers(String(profile.user.id));
+        setFollowers(data);
+      } catch (err) {
+        console.error('Gagal mengambil followers:', err);
+      } finally {
+        setIsSocialLoading(false);
+      }
+    } else if (type === 'following' && following.length === 0) {
+      setIsSocialLoading(true);
+      try {
+        const data = await userService.getFollowing(String(profile.user.id));
+        setFollowing(data);
+      } catch (err) {
+        console.error('Gagal mengambil following:', err);
+      } finally {
+        setIsSocialLoading(false);
+      }
+    }
+  };
 
   const handleOpenFavModal = async () => {
     setIsFavModalOpen(true);
@@ -379,22 +408,22 @@ export default function ProfilePage() {
               <div className="mt-4 flex items-center gap-4">
                 <button
                   type="button"
-                  onClick={() => setSocialModalType('followers')}
+                  onClick={() => handleOpenSocialModal('followers')}
                   className="group flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-800/50 px-3 py-1.5 text-xs transition-all hover:border-slate-700 hover:bg-slate-800 active:scale-95"
                 >
                   <span className="font-extrabold text-white group-hover:text-indigo-400 transition-colors">
-                    {followers.length}
+                    {profile.user.followers_count ?? followers.length}
                   </span>
                   <span className="text-slate-400">Followers</span>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setSocialModalType('following')}
+                  onClick={() => handleOpenSocialModal('following')}
                   className="group flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-800/50 px-3 py-1.5 text-xs transition-all hover:border-slate-700 hover:bg-slate-800 active:scale-95"
                 >
                   <span className="font-extrabold text-white group-hover:text-indigo-400 transition-colors">
-                    {following.length}
+                    {profile.user.following_count ?? following.length}
                   </span>
                   <span className="text-slate-400">Following</span>
                 </button>
@@ -949,7 +978,12 @@ export default function ProfilePage() {
             </div>
 
             <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
-              {(socialModalType === 'followers' ? followers : following).length === 0 ? (
+              {isSocialLoading ? (
+                <div className="py-8 text-center text-slate-400">
+                  <Loader2 className="mx-auto h-6 w-6 animate-spin text-indigo-500 mb-2" />
+                  <span className="text-xs">Memuat daftar pengguna...</span>
+                </div>
+              ) : (socialModalType === 'followers' ? followers : following).length === 0 ? (
                 <p className="py-8 text-center text-xs text-slate-500">
                   {socialModalType === 'followers' ? 'Belum ada pengikut.' : 'Belum mengikuti siapa pun.'}
                 </p>

@@ -19,10 +19,17 @@ class LibraryController extends Controller
             $query->wherePivot('status', $status);
         }
 
-        $library = $query->get()->map(function ($game) use ($userId) {
-            $review = Review::where('user_id', $userId)
-                ->where('game_id', $game->id)
-                ->first();
+        $games = $query->get();
+        $gameIds = $games->pluck('id')->all();
+        $reviewsByGame = !empty($gameIds)
+            ? Review::where('user_id', $userId)
+                ->whereIn('game_id', $gameIds)
+                ->get()
+                ->keyBy('game_id')
+            : collect();
+
+        $library = $games->map(function ($game) use ($reviewsByGame) {
+            $review = $reviewsByGame->get($game->id);
 
             $game->user_review = $review ? [
                 'id'              => (string) $review->id,
