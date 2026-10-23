@@ -1,5 +1,6 @@
 import type { Game, ExternalGame } from '../types';
 import { authService } from './authService'; 
+import { API_BASE_URL } from '../config/api'; 
 
 interface RawGame {
   id: string | number;
@@ -29,7 +30,7 @@ interface RawExternalGame {
   platforms: string[];
 }
 
-const API_URL = 'http://127.0.0.1:8000/api/games';
+const API_URL = `${API_BASE_URL}/games`;
 
 const getHeaders = () => ({
   'Content-Type': 'application/json',
@@ -129,8 +130,8 @@ export interface RecentReview {
   dateAdded: string | null;
 }
 
-const LIBRARY_URL = 'http://127.0.0.1:8000/api/library';
-const REVIEWS_URL = 'http://127.0.0.1:8000/api/reviews';
+const LIBRARY_URL = `${API_BASE_URL}/library`;
+const REVIEWS_URL = `${API_BASE_URL}/reviews`;
 
 interface RawReleaseGame {
   igdb_id: number | string;

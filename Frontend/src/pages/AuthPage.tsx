@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import { authService } from '../services/authService';
+import { GOOGLE_AUTH_URL } from '../config/api';
 
 const CARDS = [
   { title: 'Delands',     sub: 'Koleksi pribadi', rating: '9.2', img: '/cover_delands.jpg'     },
@@ -297,7 +298,7 @@ export default function AuthPage() {
 
           <button
             type="button"
-            onClick={() => (window.location.href = 'http://127.0.0.1:8000/auth/google/redirect')}
+            onClick={() => (window.location.href = GOOGLE_AUTH_URL)}
             className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-slate-700 bg-slate-800/60 text-sm font-semibold text-slate-200 transition-colors hover:bg-slate-800"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">

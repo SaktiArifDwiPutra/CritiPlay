@@ -17,6 +17,7 @@ import {
 import { authService } from '../services/authService';
 import { userService } from '../services/userService';
 import { libraryService, type LibraryGame } from '../services/libraryService';
+import { getStorageUrl } from '../config/api';
 import type { SearchUser } from '../types';
 
 type LibraryStats = {
@@ -356,7 +357,7 @@ export default function ProfilePage() {
                   <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
                 ) : avatar ? (
                   <img
-                    src={avatar.startsWith('http') ? avatar : `http://127.0.0.1:8000/storage/${avatar}`}
+                    src={getStorageUrl(avatar) || undefined}
                     alt={name}
                     className="h-full w-full object-cover"
                   />
@@ -874,7 +875,7 @@ export default function ProfilePage() {
                     <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
                   ) : avatar ? (
                     <img
-                      src={avatar.startsWith('http') ? avatar : `http://127.0.0.1:8000/storage/${avatar}`}
+                      src={getStorageUrl(avatar) || undefined}
                       alt={name}
                       className="h-full w-full object-cover"
                     />

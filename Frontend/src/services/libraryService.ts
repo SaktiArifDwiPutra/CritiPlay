@@ -1,6 +1,7 @@
 import { authService } from './authService';
+import { API_BASE_URL } from '../config/api';
 
-const API_URL = 'http://127.0.0.1:8000/api/library';
+const API_URL = `${API_BASE_URL}/library`;
 
 export type LibraryStatus =
   | 'all'

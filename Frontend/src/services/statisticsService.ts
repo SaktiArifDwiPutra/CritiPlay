@@ -1,4 +1,5 @@
 import { authService } from './authService';
+import { API_BASE_URL } from '../config/api';
 
 export interface AspectLeader {
   id: string;
@@ -71,7 +72,7 @@ export interface StatisticsData {
   };
 }
 
-const API_URL = 'http://127.0.0.1:8000/api/statistics';
+const API_URL = `${API_BASE_URL}/statistics`;
 
 export const statisticsService = {
   getStatistics: async (): Promise<StatisticsData> => {
