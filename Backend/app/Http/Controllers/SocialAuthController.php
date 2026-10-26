@@ -18,7 +18,7 @@ class SocialAuthController extends Controller
 
     public function callback()
     {
-        $frontendUrl = config('app.frontend_url', 'http://localhost:5173');
+        $frontendUrl = rtrim(config('app.frontend_url', 'http://localhost:5173'), '/');
 
         try {
             $googleUser = Socialite::driver('google')->user();
