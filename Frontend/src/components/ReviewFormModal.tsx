@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { X, Sparkles, Star } from 'lucide-react';
 import type { RatingAspect, Review } from '../types';
+import StarRatingInput, { RATING_DESCRIPTIONS } from './StarRatingInput';
 
 interface ReviewFormModalProps {
   isOpen: boolean;
@@ -15,7 +17,7 @@ export default function ReviewFormModal({
   isOpen,
   onClose,
   onSubmit,
-  initialData
+  initialData,
 }: ReviewFormModalProps) {
   const [content, setContent] = useState(
     initialData?.reviewText ?? ''
@@ -24,17 +26,26 @@ export default function ReviewFormModal({
   const [aspects, setAspects] = useState<RatingAspect[]>([
     {
       aspect: 'Gameplay',
-      score: initialData?.ratingGameplay ?? 0
+      score: initialData?.ratingGameplay ?? 8,
     },
     {
       aspect: 'Visual',
-      score: initialData?.ratingVisual ?? 0
+      score: initialData?.ratingVisual ?? 8,
     },
     {
       aspect: 'Story',
-      score: initialData?.ratingStory ?? 0
-    }
+      score: initialData?.ratingStory ?? 8,
+    },
   ]);
+
+  const overallScore = useMemo(() => {
+    if (aspects.length === 0) return 0;
+    const sum = aspects.reduce((acc, curr) => acc + (curr.score || 0), 0);
+    return Math.round((sum / aspects.length) * 10) / 10;
+  }, [aspects]);
+
+  const roundedOverall = Math.round(overallScore);
+  const overallDescriptor = RATING_DESCRIPTIONS[roundedOverall] || RATING_DESCRIPTIONS[8];
 
   if (!isOpen) return null;
 
@@ -60,81 +71,119 @@ export default function ReviewFormModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex justify-center items-center p-4 z-50">
-      <div className="bg-white rounded-3xl p-8 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold text-slate-800 mb-6">
-          {initialData ? 'Edit Jurnal' : 'Tulis Jurnal Baru'}
-        </h2>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Rating */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-600 mb-3">
-              Rating (1-10)
-            </label>
-
-            <div className="space-y-4">
-              {aspects.map((aspect, index) => (
-                <div key={aspect.aspect}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-slate-600">
-                      {aspect.aspect}
-                    </span>
-
-                    <span className="font-bold text-blue-600">
-                      {aspect.score}/10
-                    </span>
-                  </div>
-
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    value={aspect.score}
-                    onChange={(e) =>
-                      handleScoreChange(
-                        index,
-                        Number(e.target.value)
-                      )
-                    }
-                    className="w-full accent-blue-600"
-                  />
-                </div>
-              ))}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm overflow-y-auto"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-900 p-6 sm:p-7 shadow-2xl text-slate-100 max-h-[92vh] overflow-y-auto scrollbar-none"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between border-b border-slate-800/80 pb-4 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-extrabold text-white">
+                {initialData ? 'Edit Jurnal Game' : 'Tulis Jurnal Baru'}
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Bagikan pengalaman, skor per aspek, dan catatan ulasanmu.
+              </p>
             </div>
           </div>
 
-          {/* Review */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-600 mb-2">
-              Catatan Jurnal
-            </label>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
 
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Live Overall Score Preview */}
+          <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+            <div>
+              <p className="text-xs font-semibold text-slate-400">Rata-rata Skor Keseluruhan</p>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-2xl font-black text-white">
+                  {overallScore.toFixed(1)}
+                </span>
+                <span className="text-xs text-slate-500">/ 10</span>
+                {overallDescriptor && (
+                  <span
+                    className={`ml-2 px-2.5 py-0.5 rounded-full text-xs font-bold border ${overallDescriptor.badgeBg}`}
+                  >
+                    {overallDescriptor.title}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1 text-amber-400 bg-amber-400/10 border border-amber-400/20 px-3 py-1.5 rounded-xl">
+              <Star className="h-4 w-4 fill-amber-400" />
+              <span className="text-sm font-bold">{overallScore.toFixed(1)}</span>
+            </div>
+          </div>
+
+          {/* Rating Aspects with StarRatingInput */}
+          <div className="space-y-5">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Penilaian Aspek Game
+            </p>
+
+            {aspects.map((aspect, index) => (
+              <div
+                key={aspect.aspect}
+                className="rounded-xl border border-slate-800/80 bg-slate-950/30 p-3.5"
+              >
+                <StarRatingInput
+                  label={aspect.aspect}
+                  value={aspect.score}
+                  onChange={(newScore) => handleScoreChange(index, newScore)}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Review Text */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+              Catatan Jurnal / Ulasan
+            </label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              rows={5}
-              className="w-full border border-slate-200 rounded-xl p-3 bg-slate-50 outline-none focus:border-blue-500 resize-none"
-              placeholder="Tulis pendapatmu tentang game ini..."
+              rows={4}
+              maxLength={2000}
+              className="w-full rounded-xl border border-slate-700/80 bg-slate-950/70 p-3.5 text-sm text-slate-100 placeholder:text-slate-500 outline-none transition-colors focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/25 resize-none"
+              placeholder="Bagikan opini, gameplay flow, cerita, atau kelebihan dan kekurangan game ini..."
               required
             />
+            <div className="flex justify-end mt-1">
+              <span className="text-[11px] text-slate-500">{content.length}/2000</span>
+            </div>
           </div>
 
-          {/* Buttons */}
-          <div className="flex gap-4 pt-4">
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3 pt-2 border-t border-slate-800/80">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors"
+              className="flex-1 rounded-xl border border-slate-800 bg-slate-800/50 px-5 py-2.5 text-sm font-semibold text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
             >
               Batal
             </button>
 
             <button
               type="submit"
-              className="flex-1 px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors shadow-sm"
+              className="flex-1 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-500 active:scale-95"
             >
-              {initialData ? 'Update Jurnal' : 'Simpan Jurnal'}
+              {initialData ? 'Perbarui Jurnal' : 'Simpan Jurnal'}
             </button>
           </div>
         </form>
