@@ -55,7 +55,7 @@ export default function Navbar() {
           <img 
             src={logo}
             alt="CritiPlay Icon" 
-            className="h-8 w-8 object-contain transition-transform group-hover:scale-110" 
+            className="h-11 w-11 object-contain transition-transform group-hover:scale-110" 
           />
         </Link>
 
