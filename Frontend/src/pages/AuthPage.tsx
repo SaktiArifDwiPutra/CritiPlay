@@ -109,7 +109,7 @@ const InputField = ({
   label: string; icon: React.ElementType; children: React.ReactNode;
 }) => (
   <div>
-    <label className="mb-1.5 block text-sm font-semibold text-slate-300">{label}</label>
+    <label className="mb-1 block text-xs sm:text-sm font-semibold text-slate-300">{label}</label>
     <div className="relative">
       <Icon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
       {children}
@@ -118,7 +118,7 @@ const InputField = ({
 );
 
 const INPUT_BASE =
-  'h-12 w-full rounded-xl border bg-slate-800/60 text-sm text-slate-100 outline-none placeholder:text-slate-500 transition-colors focus:ring-2 focus:ring-indigo-500/25';
+  'h-10.5 sm:h-11 w-full rounded-xl border bg-slate-800/60 text-sm text-slate-100 outline-none placeholder:text-slate-500 transition-colors focus:ring-2 focus:ring-indigo-500/25';
 
 const EASE = 'cubic-bezier(0.76, 0, 0.24, 1)';
 
@@ -148,13 +148,37 @@ export default function AuthPage() {
   useEffect(() => {
     const prevBodyOverflow = document.body.style.overflow;
     const prevHtmlOverflow = document.documentElement.style.overflow;
+    const prevBodyOverscroll = document.body.style.overscrollBehavior;
 
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
+    document.body.style.overscrollBehavior = 'none';
+
+    // Prevent wheel and touch scrolling across the viewport
+    const blockScroll = (e: Event) => {
+      e.preventDefault();
+    };
+
+    // Prevent keyboard scrolling (Space, PageUp/Down, Arrows) outside inputs
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isInput = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA';
+      if (!isInput && ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('wheel', blockScroll, { passive: false });
+    window.addEventListener('touchmove', blockScroll, { passive: false });
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.body.style.overflow = prevBodyOverflow;
       document.documentElement.style.overflow = prevHtmlOverflow;
+      document.body.style.overscrollBehavior = prevBodyOverscroll;
+      window.removeEventListener('wheel', blockScroll);
+      window.removeEventListener('touchmove', blockScroll);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -208,7 +232,7 @@ export default function AuthPage() {
   const formLeft    = isLoginMode ? '52%' : '0%';
 
   return (
-    <div className="relative h-screen h-[100dvh] overflow-hidden bg-slate-950 no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="fixed inset-0 h-screen h-[100dvh] w-screen overflow-hidden bg-slate-950 overscroll-none touch-none select-none no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <div
         className="absolute top-0 hidden h-full w-[52%] lg:block"
         style={{ left: mosaicLeft, transition: panelTransition }}
@@ -217,16 +241,16 @@ export default function AuthPage() {
       </div>
 
       <div
-        className="absolute top-0 flex h-full w-full flex-col items-center overflow-y-auto no-scrollbar px-6 py-6 sm:py-10 lg:w-[48%] lg:px-14 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="absolute top-0 flex h-full w-full flex-col items-center justify-center overflow-hidden px-6 py-4 lg:w-[48%] lg:px-12"
         style={{ left: formLeft, transition: panelTransition }}
       >
-        <div className="my-auto flex w-full flex-col items-center py-4">
-          <div className="mb-8 flex items-center gap-2 lg:hidden">
+        <div className="flex w-full max-w-[360px] flex-col items-center">
+          <div className="mb-4 flex items-center gap-2 lg:hidden">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white">C</div>
             <span className="text-base font-bold text-white">CritiPlay.</span>
           </div>
 
-          <div className="w-full max-w-[360px]">
+          <div className="w-full">
             <h1 className="text-2xl font-extrabold text-white">
               {isLoginMode ? 'Selamat datang kembali' : 'Buat akun baru'}
             </h1>
@@ -235,12 +259,12 @@ export default function AuthPage() {
             </p>
 
             {(error || googleError) && (
-              <div className="mt-4 rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium text-red-400 ring-1 ring-red-500/20">
+              <div className="mt-3 rounded-xl bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-400 ring-1 ring-red-500/20">
                 {error || googleError}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="mt-5 space-y-3">
+            <form onSubmit={handleSubmit} className="mt-4 space-y-2.5 sm:space-y-3">
               {!isLoginMode && (
                 <InputField label="Nama Lengkap" icon={User}>
                   <input
@@ -279,7 +303,7 @@ export default function AuthPage() {
               {isLoginMode && (
                 <div className="flex justify-end">
                   <button type="button" onClick={() => navigate('/forgot-password')}
-                    className="text-sm font-semibold text-indigo-400 transition-colors hover:text-indigo-300">
+                    className="text-xs sm:text-sm font-semibold text-indigo-400 transition-colors hover:text-indigo-300">
                     Lupa password?
                   </button>
                 </div>
@@ -298,13 +322,13 @@ export default function AuthPage() {
 
               <button
                 type="submit" disabled={isLoading}
-                className="mt-1 flex h-12 w-full items-center justify-center rounded-xl bg-indigo-600 text-sm font-bold text-white transition-colors hover:bg-indigo-500 disabled:opacity-60"
+                className="mt-1 flex h-10.5 sm:h-11 w-full items-center justify-center rounded-xl bg-indigo-600 text-sm font-bold text-white transition-colors hover:bg-indigo-500 disabled:opacity-60"
               >
                 {isLoading ? 'Memproses...' : isLoginMode ? 'Masuk' : 'Daftar Sekarang'}
               </button>
             </form>
 
-            <div className="my-3 flex items-center gap-3">
+            <div className="my-2.5 sm:my-3 flex items-center gap-3">
               <span className="h-px flex-1 bg-slate-800" />
               <span className="text-xs font-medium text-slate-500">atau</span>
               <span className="h-px flex-1 bg-slate-800" />
@@ -313,7 +337,7 @@ export default function AuthPage() {
             <button
               type="button"
               onClick={() => (window.location.href = GOOGLE_AUTH_URL)}
-              className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-slate-700 bg-slate-800/60 text-sm font-semibold text-slate-200 transition-colors hover:bg-slate-800"
+              className="flex h-10.5 sm:h-11 w-full items-center justify-center gap-3 rounded-xl border border-slate-700 bg-slate-800/60 text-sm font-semibold text-slate-200 transition-colors hover:bg-slate-800"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -324,7 +348,7 @@ export default function AuthPage() {
               Lanjutkan dengan Google
             </button>
 
-            <p className="mt-4 text-center text-sm text-slate-500">
+            <p className="mt-3.5 sm:mt-4 text-center text-sm text-slate-500">
               {isLoginMode ? 'Belum punya akun? ' : 'Sudah punya akun? '}
               <button type="button" onClick={switchMode}
                 className="font-bold text-indigo-400 transition-colors hover:text-indigo-300">
@@ -333,7 +357,7 @@ export default function AuthPage() {
             </p>
           </div>
 
-          <p className="mt-6 flex items-center gap-1.5 text-xs text-slate-600">
+          <p className="mt-4 sm:mt-5 flex items-center gap-1.5 text-xs text-slate-600">
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
