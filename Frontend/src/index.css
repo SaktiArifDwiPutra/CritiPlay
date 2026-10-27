@@ -11,3 +11,15 @@
 body {
   @apply bg-slate-950 text-slate-100 antialiased;
 }
+
+/* Hide scrollbars across browsers while retaining scrolling functionality */
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar,
+.scrollbar-none {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
