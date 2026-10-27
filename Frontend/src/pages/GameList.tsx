@@ -656,9 +656,9 @@ const RecommendationBanner = ({
             src={game.cover_url}
             alt=""
             aria-hidden="true"
-            className="absolute inset-0 h-full w-full scale-110 object-cover object-center blur-sm brightness-70 opacity-20"
+            className="absolute inset-0 h-full w-full scale-110 object-cover object-center blur-[3px] brightness-75 opacity-55"
           />
-          <div className="absolute inset-0 bg-slate-950/70" />
+          <div className="absolute inset-0 bg-slate-950/55" />
         </>
       )}
       {!game.cover_url && <div className="absolute inset-0 bg-slate-900" />}
