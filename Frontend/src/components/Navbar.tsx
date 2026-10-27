@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Loader2, LogOut, UserPlus } from 'lucide-react';
 import { authService } from '../services/authService';
 import UserSearchModal from './UserSearchModal';
+import logo from '../assets/critiplay_logo.png';
 
 export default function Navbar() {
   const [userName, setUserName] = useState('');
@@ -52,13 +53,10 @@ export default function Navbar() {
           className="group flex items-center gap-2.5 transition-transform duration-150 hover:scale-105 active:scale-95"
         >
           <img 
-            src="/assets/critiplay_logo.png" 
+            src={logo}
             alt="CritiPlay Icon" 
             className="h-8 w-8 object-contain transition-transform group-hover:scale-110" 
           />
-          <span className="text-lg font-bold tracking-tight text-white">
-            CritiPlay<span className="text-indigo-400">.</span>
-          </span>
         </Link>
 
         <div className="flex items-center gap-4">
