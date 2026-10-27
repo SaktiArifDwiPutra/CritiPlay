@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, User, ShieldCheck } from 'lucide-react';
 import { authService } from '../services/authService';
 import { GOOGLE_AUTH_URL } from '../config/api';
+import logo from '../assets/logo_header_dark.png';
 
 const CARDS = [
   { title: 'Delands', sub: 'Koleksi pribadi', rating: '9.2', img: '/cover_delands.jpg' },
@@ -85,16 +86,18 @@ const MosaicPanel = ({
       </div>
     </div>
 
+    {/* Brand Logo matching Navbar */}
     <div
-      className={`absolute top-7 z-20 flex items-center gap-2 ${
-        flipped ? 'right-7 flex-row-reverse' : 'left-7'
+      className={`absolute top-7 z-20 logo-wrapper ${
+        flipped ? 'right-7' : 'left-7'
       }`}
       style={{ opacity: labelOpacity, transition: 'opacity 0.28s ease' }}
     >
-      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white shadow-md shadow-indigo-600/30">
-        C
-      </div>
-      <span className="text-base font-bold text-white">CritiPlay.</span>
+      <img
+        src={logo}
+        alt="CritiPlay"
+        className="navbar-logo h-9 w-auto object-contain"
+      />
     </div>
 
     <div
@@ -269,51 +272,37 @@ export default function AuthPage() {
       </div>
 
       {/* MOBILE FULL-WIDTH PANORAMIC HEADER BANNER */}
-      <div className="relative w-full h-44 sm:h-52 overflow-hidden lg:hidden shrink-0">
+      <div className="relative w-full h-48 sm:h-56 overflow-hidden lg:hidden shrink-0">
         {/* Layered dark gradients for seamless edge-to-edge fade */}
-        <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-b from-slate-950/30 via-slate-950/60 to-slate-950" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-24 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-slate-950/80 to-transparent" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-slate-950/80 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-b from-slate-950/20 via-slate-950/50 to-slate-950" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-28 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-slate-950/60 to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-slate-950/60 to-transparent" />
 
-        {/* Tilted Game Cards spanning full width from left to right */}
+        {/* Tilted Game Cards spanning generously past left and right edges */}
         <div
-          className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center justify-center gap-3 sm:gap-4 origin-center opacity-65 w-[125%]"
-          style={{ transform: 'translateX(-50%) rotate(-5deg) scale(1.05)' }}
+          className="absolute -top-10 left-1/2 flex items-center justify-center gap-3.5 origin-center opacity-70 w-[180%] min-w-[850px]"
+          style={{ transform: 'translateX(-50%) rotate(-4deg) scale(1.05)' }}
         >
-          <div className="w-24 sm:w-28 shrink-0">
-            <GameCard {...CARDS[0]} />
-          </div>
-          <div className="w-24 sm:w-28 shrink-0 -mt-7">
-            <GameCard {...CARDS[1]} />
-          </div>
-          <div className="w-24 sm:w-28 shrink-0 mt-3">
-            <GameCard {...CARDS[2]} />
-          </div>
-          <div className="w-24 sm:w-28 shrink-0 -mt-5">
-            <GameCard {...CARDS[3]} />
-          </div>
-          <div className="w-24 sm:w-28 shrink-0 mt-2">
-            <GameCard {...CARDS[4]} />
-          </div>
-          <div className="w-24 sm:w-28 shrink-0 -mt-6">
-            <GameCard {...CARDS[0]} />
-          </div>
+          {[...CARDS, ...CARDS].map((card, idx) => (
+            <div
+              key={idx}
+              className={`w-24 sm:w-28 shrink-0 ${
+                idx % 3 === 0 ? '-mt-6' : idx % 3 === 1 ? 'mt-3' : '-mt-2'
+              }`}
+            >
+              <GameCard {...card} />
+            </div>
+          ))}
         </div>
 
-        {/* Brand Header Overlay */}
-        <div className="absolute top-5 left-5 z-20 flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-sm font-extrabold text-white shadow-lg shadow-indigo-600/40 ring-1 ring-white/20">
-            C
-          </div>
-          <div>
-            <span className="text-base font-extrabold tracking-tight text-white">
-              CritiPlay<span className="text-indigo-400">.</span>
-            </span>
-            <p className="text-[10px] font-medium text-slate-400 -mt-0.5">
-              Jurnal Game Pribadi
-            </p>
-          </div>
+        {/* Brand Logo matching Navbar */}
+        <div className="absolute top-4 left-4 sm:top-5 sm:left-6 z-20 logo-wrapper">
+          <img
+            src={logo}
+            alt="CritiPlay"
+            className="navbar-logo h-8 sm:h-9 w-auto object-contain"
+          />
         </div>
       </div>
 
@@ -322,7 +311,7 @@ export default function AuthPage() {
         className={`flex w-full flex-col items-center justify-center ${
           isDesktop
             ? 'absolute top-0 h-full w-[48%] overflow-hidden px-8 lg:px-12'
-            : 'relative w-full max-w-[420px] mx-auto px-4 sm:px-6 -mt-8 z-20'
+            : 'relative w-full max-w-[420px] mx-auto px-4 sm:px-6 -mt-10 z-20'
         }`}
         style={
           isDesktop
