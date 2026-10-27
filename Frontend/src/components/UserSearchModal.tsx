@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ExternalLink,
@@ -33,6 +33,11 @@ export default function UserSearchModal({
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [followLoading, setFollowLoading] = useState<Set<string>>(new Set());
 
+  // Refs for outside-click detection and search input focus
+  const panelRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const mouseDownInsideRef = useRef(false);
+
   // Load following user & current user profile saat modal dibuka
   useEffect(() => {
     if (!isOpen) return;
@@ -53,6 +58,13 @@ export default function UserSearchModal({
     };
 
     loadFollowing();
+  }, [isOpen]);
+
+  // Focus search input when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+    const timer = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(timer);
   }, [isOpen]);
 
   // Support tombol Escape untuk menutup modal
@@ -151,11 +163,21 @@ export default function UserSearchModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm transition-all"
-      onClick={handleClose}
+      onMouseDown={(e) => {
+        // Track if mousedown started inside the panel
+        mouseDownInsideRef.current = panelRef.current?.contains(e.target as Node) ?? false;
+      }}
+      onMouseUp={(e) => {
+        // Only close if both mousedown and mouseup were outside the panel
+        const clickedOutside = !panelRef.current?.contains(e.target as Node);
+        if (clickedOutside && !mouseDownInsideRef.current) {
+          handleClose();
+        }
+      }}
     >
       <div
+        ref={panelRef}
         className="relative w-full max-w-lg rounded-2xl border border-slate-800/80 bg-slate-900/95 p-6 shadow-2xl ring-1 ring-white/10 backdrop-blur-xl"
-        onClick={(event) => event.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-start justify-between border-b border-slate-800/80 pb-4">
@@ -188,6 +210,7 @@ export default function UserSearchModal({
           <div className="relative">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <input
+              ref={inputRef}
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
