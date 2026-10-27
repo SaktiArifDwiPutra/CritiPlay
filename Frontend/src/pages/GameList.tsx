@@ -650,24 +650,20 @@ const RecommendationBanner = ({
 
   return (
     <div className="relative overflow-hidden rounded-xl ring-1 ring-white/10">
-      {/* Blurred cover as background */}
       {game.cover_url && (
         <>
           <img
             src={game.cover_url}
             alt=""
             aria-hidden="true"
-            className="absolute inset-0 h-full w-full scale-110 object-cover object-center blur-2xl brightness-50 opacity-50"
+            className="absolute inset-0 h-full w-full scale-110 object-cover object-center blur-lg brightness-50 opacity-50"
           />
           <div className="absolute inset-0 bg-slate-950/70" />
         </>
       )}
-      {/* Fallback solid background when there's no cover */}
       {!game.cover_url && <div className="absolute inset-0 bg-slate-900" />}
 
-      {/* Content sits above the background */}
       <div className="relative flex gap-5 p-5">
-        {/* Sharp cover thumbnail on the left */}
         {game.cover_url ? (
           <img
             src={game.cover_url}
@@ -679,7 +675,6 @@ const RecommendationBanner = ({
           <div className="aspect-[2/3] w-28 shrink-0 rounded-lg bg-slate-800 sm:w-32" />
         )}
 
-        {/* Info + buttons on the right */}
         <div className="flex min-w-0 flex-1 flex-col justify-center">
           <p className="text-sm font-semibold text-violet-300">{eyebrow}</p>
           <h3 className="mt-1 line-clamp-2 text-xl font-extrabold text-slate-50">
