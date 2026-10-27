@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Loader2, LogOut, UserPlus } from 'lucide-react';
 import { authService } from '../services/authService';
 import UserSearchModal from './UserSearchModal';
-import logo from '../assets/logo_header.png';
+import logo from '../assets/logo_header_dark.png';
 
 export default function Navbar() {
   const [userName, setUserName] = useState('');

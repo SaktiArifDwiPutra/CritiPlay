@@ -26,14 +26,16 @@ body {
 .logo-wrapper {
   display: inline-flex;
   align-items: center;
-  padding: 5px 11px;
-  border-radius: 10px;
-  background: rgba(79, 70, 229, 0.18);
-  box-shadow: 0 0 12px rgba(99, 102, 241, 0.25);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.logo-wrapper:hover {
+  opacity: 0.95;
 }
 
 .navbar-logo {
-  height: 36px;
+  height: 38px;
   width: auto;
-  filter: drop-shadow(0 0 2px rgba(56, 189, 248, 0.4));
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.15));
 }
