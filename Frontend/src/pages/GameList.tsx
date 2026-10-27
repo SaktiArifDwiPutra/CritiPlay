@@ -1010,10 +1010,10 @@ const Hero = ({
           src={game.cover_url}
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 h-full w-full scale-125 object-cover blur-2xl opacity-50"
+          className="absolute inset-0 h-full w-full scale-125 object-cover blur-[3px] brightness-75 opacity-55"
         />
       )}
-      <div className="absolute inset-0 bg-slate-950/60" />
+      <div className="absolute inset-0 bg-slate-950/55" />
 
       <div className="relative flex flex-col gap-6 p-6 sm:flex-row sm:items-end sm:gap-8 sm:p-10">
         {game.cover_url && (
