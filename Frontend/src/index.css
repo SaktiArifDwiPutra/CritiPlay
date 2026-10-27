@@ -11,8 +11,7 @@
 body {
   @apply bg-slate-950 text-slate-100 antialiased;
 }
-
-/* Hide scrollbars across browsers while retaining scrolling functionality */
+ 
 .no-scrollbar::-webkit-scrollbar,
 .scrollbar-none::-webkit-scrollbar {
   display: none;
@@ -20,6 +19,20 @@ body {
 
 .no-scrollbar,
 .scrollbar-none {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; 
+  scrollbar-width: none; 
+}
+
+.logo-wrapper {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: rgba(99, 102, 241, 0.15);
+}
+
+.navbar-logo {
+  height: 36px;
+  width: auto;
+  display: block;
 }
