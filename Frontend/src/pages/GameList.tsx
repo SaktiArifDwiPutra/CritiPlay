@@ -385,11 +385,10 @@ const ChipGroup = ({
             type="button"
             aria-pressed={isActive}
             onClick={() => onChange(option)}
-            className={`h-10 shrink-0 rounded-full px-4 text-sm font-medium ring-1 transition-colors ${
-              isActive
+            className={`h-10 shrink-0 rounded-full px-4 text-sm font-medium ring-1 transition-colors ${isActive
                 ? CHIP_TONE[tone]
                 : 'bg-slate-900 text-slate-300 ring-slate-700 hover:bg-slate-800'
-            }`}
+              }`}
           >
             {option ?? 'Semua'}
           </button>
@@ -1602,14 +1601,14 @@ export default function GameList() {
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
               {isLoadingReviews
                 ? Array.from({ length: 2 }).map((_, index) => (
-                    <div
-                      key={index}
-                      className="h-52 animate-pulse rounded-xl bg-slate-800"
-                    />
-                  ))
+                  <div
+                    key={index}
+                    className="h-52 animate-pulse rounded-xl bg-slate-800"
+                  />
+                ))
                 : recentReviews.map((review) => (
-                    <ReviewCard key={review.id} review={review} />
-                  ))}
+                  <ReviewCard key={review.id} review={review} />
+                ))}
             </div>
           </Section>
         )}
@@ -1643,11 +1642,10 @@ export default function GameList() {
                   role="tab"
                   aria-selected={activeAspect === tab.key}
                   onClick={() => setActiveAspect(tab.key)}
-                  className={`h-9 rounded-md px-4 text-sm font-semibold transition-colors ${
-                    activeAspect === tab.key
+                  className={`h-9 rounded-md px-4 text-sm font-semibold transition-colors ${activeAspect === tab.key
                       ? 'shadow-sm bg-slate-700 text-indigo-300'
                       : 'text-slate-400 hover:text-slate-200'
-                  }`}
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -1731,31 +1729,31 @@ export default function GameList() {
         {(releasedGames.length > 0 ||
           upcomingGames.length > 2 ||
           anticipatedGames.length > 0) && (
-          <Section
-            title="Radar rilis"
-            subtitle="Yang baru terbit, yang segera terbit, dan yang paling ditunggu."
-          >
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-              <ReleaseColumn
-                title="Baru rilis"
-                games={releasedGames}
-                detail={(game) => formatReleaseDate(game.release_date)}
-              />
-              <ReleaseColumn
-                title="Segera rilis"
-                games={upcomingGames.slice(2, 7)}
-                detail={(game) => formatReleaseDate(game.release_date)}
-              />
-              <ReleaseColumn
-                title="Paling dinanti"
-                games={anticipatedGames}
-                detail={(game) =>
-                  `${formatReleaseDate(game.release_date)}, ${game.hypes} menunggu`
-                }
-              />
-            </div>
-          </Section>
-        )}
+            <Section
+              title="Radar rilis"
+              subtitle="Yang baru terbit, yang segera terbit, dan yang paling ditunggu."
+            >
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+                <ReleaseColumn
+                  title="Baru rilis"
+                  games={releasedGames}
+                  detail={(game) => formatReleaseDate(game.release_date)}
+                />
+                <ReleaseColumn
+                  title="Segera rilis"
+                  games={upcomingGames.slice(2, 7)}
+                  detail={(game) => formatReleaseDate(game.release_date)}
+                />
+                <ReleaseColumn
+                  title="Paling dinanti"
+                  games={anticipatedGames}
+                  detail={(game) =>
+                    `${formatReleaseDate(game.release_date)}, ${game.hypes} menunggu`
+                  }
+                />
+              </div>
+            </Section>
+          )}
       </>
     );
   };
