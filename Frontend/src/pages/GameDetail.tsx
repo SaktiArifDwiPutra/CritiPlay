@@ -14,8 +14,6 @@ import {
   ChevronDown,
   ChevronUp,
   X,
-  Edit3,
-  Trash2,
   Loader2,
   Share2,
   Check,
@@ -739,24 +737,6 @@ export default function GameDetail() {
               <h3 className="text-sm font-bold text-white uppercase tracking-wider">
                 Jurnal & Review Anda
               </h3>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleOpenEditReview(myReview)}
-                className="flex items-center gap-1.5 rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-3 py-1.5 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 transition-colors"
-              >
-                <Edit3 className="h-3.5 w-3.5" />
-                <span>Edit</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDeleteReview(myReview.id)}
-                className="flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/20 transition-colors"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                <span>Hapus</span>
-              </button>
             </div>
           </div>
 
