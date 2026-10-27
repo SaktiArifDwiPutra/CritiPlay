@@ -66,8 +66,6 @@ export default function Library() {
   const [games, setGames] = useState<LibraryGame[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-
-  // Edit Modal State
   const [editingGame, setEditingGame] = useState<LibraryGame | null>(null);
   const [editStatus, setEditStatus] = useState<Exclude<LibraryStatus, 'all'>>('plan_to_play');
   const [ratingGameplay, setRatingGameplay] = useState(8);
@@ -145,13 +143,11 @@ export default function Library() {
     setModalError('');
 
     try {
-      // 1. Update status game jika berubah
       const currentStatus = editingGame.pivot?.status;
       if (editStatus !== currentStatus) {
         await libraryService.updateStatus(editingGame.id, editStatus);
       }
 
-      // 2. Update atau simpan rating jika opsi rating aktif
       let updatedUserReview = editingGame.user_review || null;
 
       if (includeRating) {
@@ -192,9 +188,7 @@ export default function Library() {
         }
       }
 
-      // 3. Update daftar games di frontend secara optimistik
       setGames((prevGames) => {
-        // Jika sedang memfilter tab spesifik dan status game berubah keluar dari tab ini, remove dari list
         if (activeTab !== 'all' && activeTab !== editStatus) {
           return prevGames.filter((g) => g.id !== editingGame.id);
         }
@@ -253,7 +247,6 @@ export default function Library() {
   return (
     <div className="mx-auto max-w-6xl pb-16">
 
-      {/* HEADER SECTION */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -278,7 +271,6 @@ export default function Library() {
         </Link>
       </div>
 
-      {/* TABS FILTER */}
       <div className="mb-8 rounded-2xl border border-slate-800/80 bg-slate-900/60 p-1.5 backdrop-blur-md shadow-sm">
         <div className="flex gap-1.5 overflow-x-auto scrollbar-none">
           {tabs.map((tab) => {
@@ -300,14 +292,12 @@ export default function Library() {
         </div>
       </div>
 
-      {/* ERROR ALERT */}
       {error && (
         <div className="mb-8 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm font-medium text-red-400 shadow-sm">
           {error}
         </div>
       )}
 
-      {/* SKELETON / LOADING STATE */}
       {isLoading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
           {[...Array(8)].map((_, i) => (
@@ -348,7 +338,6 @@ export default function Library() {
           </div>
         </div>
       ) : (
-        /* GAME GRID (EXACTLY 4 CARDS PER ROW, WRAPS NATURALLY) */
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
           {games.map((game) => {
             const statusKey = (game.pivot?.status || 'plan_to_play') as Exclude<LibraryStatus, 'all'>;
@@ -361,7 +350,6 @@ export default function Library() {
                 key={game.id}
                 className="group relative flex flex-col overflow-hidden rounded-xl border border-slate-800/80 bg-slate-900/70 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-slate-700/80 hover:shadow-lg hover:shadow-indigo-950/20"
               >
-                {/* Clickable Image Section */}
                 <Link
                   to={`/game/${game.id}`}
                   className="relative block aspect-[3/4] w-full overflow-hidden bg-slate-950"
@@ -380,10 +368,8 @@ export default function Library() {
                     </div>
                   )}
 
-                  {/* Gradient Overlay */}
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
 
-                  {/* Status Badge in Top-Left */}
                   <div className="absolute left-2.5 top-2.5 z-10">
                     <span
                       className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-bold backdrop-blur-md shadow-sm ${statusCfg.badge}`}
@@ -393,7 +379,6 @@ export default function Library() {
                     </span>
                   </div>
 
-                  {/* User Rating Badge in Top-Right */}
                   {userRating !== undefined && userRating !== null && (
                     <div className="absolute right-2.5 top-2.5 z-10">
                       <div className="flex items-center gap-1 rounded-md border border-amber-500/20 bg-slate-950/80 px-1.5 py-0.5 text-[10px] font-bold text-amber-400 backdrop-blur-md shadow-sm">
@@ -404,7 +389,6 @@ export default function Library() {
                   )}
                 </Link>
 
-                {/* Card Bottom Body */}
                 <div className="flex flex-1 flex-col justify-between p-3">
                   <div>
                     <Link
@@ -426,7 +410,6 @@ export default function Library() {
                       )}
                     </div>
 
-                    {/* Genres Pills */}
                     <div className="mt-2 flex flex-wrap gap-1">
                       {game.genres && game.genres.length > 0 ? (
                         game.genres.slice(0, 2).map((genre) => (
@@ -443,13 +426,10 @@ export default function Library() {
                     </div>
                   </div>
 
-                  {/* Footer with Circular Outline Pencil Edit Button in Bottom-Right */}
                   <div className="mt-3 flex items-center justify-between border-t border-slate-800/70 pt-2.5">
                     <span className="text-[10px] font-medium text-slate-500">
                       Opsi Koleksi
                     </span>
-
-                    {/* Circular Outline Pencil Button (No background even on hover) */}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -471,7 +451,6 @@ export default function Library() {
         </div>
       )}
 
-      {/* EDIT STATUS & RATING MODAL */}
       {editingGame && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur-sm"
@@ -481,7 +460,6 @@ export default function Library() {
             className="relative w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl transition-all"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-slate-800/80 pb-4">
               <div className="flex items-center gap-3">
                 {editingGame.cover_url ? (
@@ -515,7 +493,6 @@ export default function Library() {
               </button>
             </div>
 
-            {/* Error in modal */}
             {modalError && (
               <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs font-semibold text-red-400">
                 {modalError}
@@ -523,7 +500,6 @@ export default function Library() {
             )}
 
             <form onSubmit={handleSaveEdit} className="mt-5 space-y-5">
-              {/* STATUS SELECTION */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
                   Status Bermain
@@ -553,7 +529,6 @@ export default function Library() {
                 </div>
               </div>
 
-              {/* RATING SECTION */}
               <div className="rounded-xl border border-slate-800/80 bg-slate-950/40 p-4">
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-2 cursor-pointer select-none">
@@ -578,7 +553,6 @@ export default function Library() {
 
                 {includeRating && (
                   <div className="mt-4 space-y-4 pt-3 border-t border-slate-800/70">
-                    {/* Gameplay Aspect */}
                     <div>
                       <div className="mb-1 flex items-center justify-between text-xs">
                         <span className="font-semibold text-slate-300">Gameplay</span>
@@ -594,7 +568,6 @@ export default function Library() {
                       />
                     </div>
 
-                    {/* Story Aspect with purple accent */}
                     <div>
                       <div className="mb-1 flex items-center justify-between text-xs">
                         <span className="font-semibold text-slate-300">Story</span>
@@ -610,7 +583,6 @@ export default function Library() {
                       />
                     </div>
 
-                    {/* Visual Aspect */}
                     <div>
                       <div className="mb-1 flex items-center justify-between text-xs">
                         <span className="font-semibold text-slate-300">Visual</span>
@@ -626,7 +598,6 @@ export default function Library() {
                       />
                     </div>
 
-                    {/* Review Notes (Optional) */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-400 mb-1.5">
                         Catatan Jurnal / Pendapat Singkat (Opsional)
@@ -643,7 +614,6 @@ export default function Library() {
                 )}
               </div>
 
-              {/* ACTION BUTTONS */}
               <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
                 <button
                   type="button"

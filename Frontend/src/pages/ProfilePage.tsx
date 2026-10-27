@@ -138,7 +138,6 @@ export default function ProfilePage() {
     };
   }, []);
 
-  // Background load favorite games from localStorage without blocking initial page load
   useEffect(() => {
     if (!profile) return;
     const savedFavIds = localStorage.getItem(`critiplay_favs_${profile.user.id}`);

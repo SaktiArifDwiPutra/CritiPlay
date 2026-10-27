@@ -154,12 +154,9 @@ export default function AuthPage() {
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overscrollBehavior = 'none';
 
-    // Prevent wheel and touch scrolling across the viewport
     const blockScroll = (e: Event) => {
       e.preventDefault();
     };
-
-    // Prevent keyboard scrolling (Space, PageUp/Down, Arrows) outside inputs
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       const isInput = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA';

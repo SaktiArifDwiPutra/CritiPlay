@@ -5,19 +5,15 @@ export default function GoogleCallback() {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    // Tangkap token dari parameter URL
     const token = searchParams.get('token');
     
     if (token) {
-      // 1. Simpan token ke localStorage browser
       localStorage.setItem('critiplay_token', token);
       
-      // 2. Beri jeda sepersekian detik untuk memastikan tersimpan, lalu lempar ke Beranda
       setTimeout(() => {
         window.location.href = '/';
       }, 300);
     } else {
-      // Jika token tidak ada di URL, baru lempar ke halaman login
       console.error("Token Google tidak ditemukan di URL!");
       window.location.href = '/login?error=google_failed';
     }

@@ -51,9 +51,11 @@ export default function Navbar() {
           to="/"
           className="group flex items-center gap-2.5 transition-transform duration-150 hover:scale-105 active:scale-95"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white shadow-md shadow-indigo-600/30 transition-colors group-hover:bg-indigo-500">
-            C
-          </div>
+          <img 
+            src="/assets/critiplay_logo.png" 
+            alt="CritiPlay Icon" 
+            className="h-8 w-8 object-contain transition-transform group-hover:scale-110" 
+          />
           <span className="text-lg font-bold tracking-tight text-white">
             CritiPlay<span className="text-indigo-400">.</span>
           </span>
