@@ -649,59 +649,79 @@ const RecommendationBanner = ({
   };
 
   return (
-    <div className="flex gap-5 rounded-xl bg-slate-900 p-5 ring-1 ring-white/10">
-      {game.cover_url ? (
-        <img
-          src={game.cover_url}
-          alt={game.name}
-          loading="lazy"
-          className="aspect-[2/3] w-28 shrink-0 rounded-lg object-cover sm:w-32"
-        />
-      ) : (
-        <div className="aspect-[2/3] w-28 shrink-0 rounded-lg bg-slate-800 sm:w-32" />
+    <div className="relative overflow-hidden rounded-xl ring-1 ring-white/10">
+      {/* Blurred cover as background */}
+      {game.cover_url && (
+        <>
+          <img
+            src={game.cover_url}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full scale-110 object-cover object-center blur-2xl brightness-50 opacity-50"
+          />
+          <div className="absolute inset-0 bg-slate-950/70" />
+        </>
       )}
+      {/* Fallback solid background when there's no cover */}
+      {!game.cover_url && <div className="absolute inset-0 bg-slate-900" />}
 
-      <div className="flex min-w-0 flex-1 flex-col justify-center">
-        <p className="text-sm font-semibold text-violet-300">{eyebrow}</p>
-        <h3 className="mt-1 line-clamp-2 text-xl font-extrabold text-slate-50">
-          {game.name}
-        </h3>
-        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400">
-          {[
-            (game.genres ?? []).slice(0, 2).join(', '),
-            (game.platforms ?? []).slice(0, 2).join(', '),
-            game.release_year,
-          ]
-            .filter(Boolean)
-            .map((item) => (
-              <span key={item}>{item}</span>
-            ))}
-        </div>
+      {/* Content sits above the background */}
+      <div className="relative flex gap-5 p-5">
+        {/* Sharp cover thumbnail on the left */}
+        {game.cover_url ? (
+          <img
+            src={game.cover_url}
+            alt={game.name}
+            loading="lazy"
+            className="aspect-[2/3] w-28 shrink-0 rounded-lg object-cover shadow-lg sm:w-32"
+          />
+        ) : (
+          <div className="aspect-[2/3] w-28 shrink-0 rounded-lg bg-slate-800 sm:w-32" />
+        )}
 
-        <div className="mt-4 flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={saveToLibrary}
-            disabled={saveState === 'saving' || saveState === 'saved'}
-            className="inline-flex h-11 items-center gap-2 rounded-lg bg-indigo-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:opacity-80"
-          >
-            {saveState === 'saved' ? (
-              <Check className="h-4 w-4" />
-            ) : saveState === 'saving' ? (
-              <RefreshCw className="h-4 w-4 animate-spin" />
-            ) : (
-              <Plus className="h-4 w-4" />
-            )}
-            {SAVE_LABEL[saveState]}
-          </button>
-          <button
-            type="button"
-            onClick={() => openGame(game)}
-            disabled={isOpening}
-            className="inline-flex h-11 items-center rounded-lg px-5 text-sm font-semibold text-slate-100 ring-1 ring-white/20 transition-colors hover:bg-white/10 disabled:opacity-70"
-          >
-            Detail
-          </button>
+        {/* Info + buttons on the right */}
+        <div className="flex min-w-0 flex-1 flex-col justify-center">
+          <p className="text-sm font-semibold text-violet-300">{eyebrow}</p>
+          <h3 className="mt-1 line-clamp-2 text-xl font-extrabold text-slate-50">
+            {game.name}
+          </h3>
+          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400">
+            {[
+              (game.genres ?? []).slice(0, 2).join(', '),
+              (game.platforms ?? []).slice(0, 2).join(', '),
+              game.release_year,
+            ]
+              .filter(Boolean)
+              .map((item) => (
+                <span key={item}>{item}</span>
+              ))}
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={saveToLibrary}
+              disabled={saveState === 'saving' || saveState === 'saved'}
+              className="inline-flex h-11 items-center gap-2 rounded-lg bg-indigo-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:opacity-80"
+            >
+              {saveState === 'saved' ? (
+                <Check className="h-4 w-4" />
+              ) : saveState === 'saving' ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
+              {SAVE_LABEL[saveState]}
+            </button>
+            <button
+              type="button"
+              onClick={() => openGame(game)}
+              disabled={isOpening}
+              className="inline-flex h-11 items-center rounded-lg px-5 text-sm font-semibold text-slate-100 ring-1 ring-white/20 transition-colors hover:bg-white/10 disabled:opacity-70"
+            >
+              Detail
+            </button>
+          </div>
         </div>
       </div>
     </div>
