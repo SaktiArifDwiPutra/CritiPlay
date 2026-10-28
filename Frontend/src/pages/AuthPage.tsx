@@ -259,7 +259,7 @@ export default function AuthPage() {
     <div
       className={`bg-slate-950 text-slate-100 no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
         isDesktop
-          ? 'fixed inset-0 h-screen h-[100dvh] w-screen overflow-hidden'
+          ? 'fixed inset-0 h-[100dvh] w-screen overflow-hidden'
           : 'relative min-h-[100dvh] w-full overflow-y-auto flex flex-col justify-between pb-8'
       }`}
     >
@@ -308,15 +308,15 @@ export default function AuthPage() {
 
       {/* FORM CONTAINER (Slide on Desktop, Elevated Glassmorphic Card on Mobile) */}
       <div
-        className={`flex w-full flex-col items-center justify-center ${
+        className={`flex flex-col items-center justify-center ${
           isDesktop
-            ? 'absolute top-0 h-full w-[48%] overflow-hidden px-8 lg:px-12'
+            ? 'absolute top-0 bottom-0 w-[48%] px-8 lg:px-12'
             : 'relative w-full max-w-[420px] mx-auto px-4 sm:px-6 -mt-10 z-20'
         }`}
         style={
           isDesktop
             ? { left: formLeft, transition: panelTransition }
-            : { left: '0%' }
+            : undefined
         }
       >
         <div
