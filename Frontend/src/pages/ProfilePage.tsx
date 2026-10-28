@@ -158,6 +158,18 @@ export default function ProfilePage() {
     }
   }, [profile?.user.id]);
 
+  // Auto-load followers & following when Activity tab is activated
+  useEffect(() => {
+    if (activeTab !== 'activity' || !profile) return;
+    const uid = String(profile.user.id);
+    if (followers.length === 0) {
+      userService.getFollowers(uid).then(setFollowers).catch(console.error);
+    }
+    if (following.length === 0) {
+      userService.getFollowing(uid).then(setFollowing).catch(console.error);
+    }
+  }, [activeTab, profile?.user.id]);
+
   const handleOpenSocialModal = async (type: 'followers' | 'following') => {
     setSocialModalType(type);
     if (!profile) return;
@@ -792,8 +804,12 @@ export default function ProfilePage() {
                       onClick={() => handleOpenProfile(u.id)}
                       className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-800/50 cursor-pointer transition-colors"
                     >
-                      <div className="h-8 w-8 rounded-full bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-xs font-bold shrink-0">
-                        {u.name.charAt(0).toUpperCase()}
+                      <div className="h-8 w-8 rounded-full bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden border border-indigo-500/20">
+                        {u.avatar ? (
+                          <img src={u.avatar} alt={u.name} className="h-full w-full object-cover" />
+                        ) : (
+                          u.name.charAt(0).toUpperCase()
+                        )}
                       </div>
                       <span className="text-xs font-semibold text-slate-200 truncate flex-1">{u.name}</span>
                       <ExternalLink className="h-3 w-3 text-slate-500" />
@@ -825,8 +841,12 @@ export default function ProfilePage() {
                       onClick={() => handleOpenProfile(u.id)}
                       className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-800/50 cursor-pointer transition-colors"
                     >
-                      <div className="h-8 w-8 rounded-full bg-purple-600/20 text-purple-400 flex items-center justify-center text-xs font-bold shrink-0">
-                        {u.name.charAt(0).toUpperCase()}
+                      <div className="h-8 w-8 rounded-full bg-purple-600/20 text-purple-400 flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden border border-purple-500/20">
+                        {u.avatar ? (
+                          <img src={u.avatar} alt={u.name} className="h-full w-full object-cover" />
+                        ) : (
+                          u.name.charAt(0).toUpperCase()
+                        )}
                       </div>
                       <span className="text-xs font-semibold text-slate-200 truncate flex-1">{u.name}</span>
                       <ExternalLink className="h-3 w-3 text-slate-500" />
