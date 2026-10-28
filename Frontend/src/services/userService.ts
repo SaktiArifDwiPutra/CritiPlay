@@ -107,5 +107,15 @@ export const userService = {
     if (!response.ok) return [];
 
     return response.json();
-  }
+  },
+
+  updateShowcase: async (gameIds: number[]): Promise<void> => {
+    const response = await fetch(`${API_URL}/users/showcase`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ game_ids: gameIds }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Gagal update showcase');
+  },
 };

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Game;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -33,6 +34,23 @@ class UserController extends Controller
             ->where('following_id', $user->id)
             ->exists();
 
+        // Resolve showcase games from stored IDs
+        $showcaseGameIds = $user->showcase_game_ids ?? [];
+        $showcaseGames = [];
+        if (!empty($showcaseGameIds)) {
+            $showcaseGames = Game::whereIn('id', $showcaseGameIds)
+                ->get()
+                ->sortBy(fn($g) => array_search($g->id, $showcaseGameIds))
+                ->values()
+                ->map(fn($g) => [
+                    'id'           => $g->id,
+                    'name'         => $g->name,
+                    'cover_url'    => $g->cover_url,
+                    'release_year' => $g->release_year,
+                ])
+                ->toArray();
+        }
+
         return response()->json([
             'user' => [
                 'id'        => $user->id,
@@ -41,14 +59,32 @@ class UserController extends Controller
                 'joined_at' => $user->created_at->format('d M Y'),
             ],
             'stats' => [
-                'library'       => $libraryStats,
-                'total_reviews' => $totalReviews,
+                'library'         => $libraryStats,
+                'total_reviews'   => $totalReviews,
                 'followers_count' => $user->followers()->count(),
                 'following_count' => $user->following()->count(),
-                'is_following'    => $isFollowing, 
+                'is_following'    => $isFollowing,
             ],
-            'recent_activity' => $recentGames,
+            'recent_activity'  => $recentGames,
+            'showcase_games'   => $showcaseGames,
         ], 200);
+    }
+
+    /**
+     * Update the authenticated user's showcase game IDs.
+     */
+    public function updateShowcase(Request $request)
+    {
+        $request->validate([
+            'game_ids'   => 'required|array|max:4',
+            'game_ids.*' => 'integer|exists:games,id',
+        ]);
+
+        $user = $request->user();
+        $user->showcase_game_ids = array_values(array_unique($request->game_ids));
+        $user->save();
+
+        return response()->json(['message' => 'Showcase berhasil diperbarui.']);
     }
 
     public function search(Request $request)
@@ -73,5 +109,5 @@ class UserController extends Controller
             });
 
         return response()->json($users);
-    }   
+    }
 }

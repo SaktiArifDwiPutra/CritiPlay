@@ -202,8 +202,9 @@ class AuthController extends Controller
                 'email'           => $user->email,
                 'avatar'          => $user->avatar,
                 'joined_at'       => $user->created_at->format('d M Y'),
-                'followers_count' => $followersCount,
-                'following_count' => $followingCount,
+                'followers_count'   => $followersCount,
+                'following_count'   => $followingCount,
+                'showcase_game_ids' => $user->showcase_game_ids ?? [],
             ],
             'stats' => [
                 'library'       => $libraryStats,

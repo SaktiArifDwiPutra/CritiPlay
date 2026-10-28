@@ -79,6 +79,13 @@ export interface PublicProfileGame {
   };
 }
 
+export interface ShowcaseGame {
+  id: number;
+  name: string;
+  cover_url: string | null;
+  release_year: string | null;
+}
+
 export interface PublicProfile {
   user: {
     id: number;
@@ -104,4 +111,5 @@ export interface PublicProfile {
   };
 
   recent_activity: PublicProfileGame[];
+  showcase_games: ShowcaseGame[];
 }

@@ -44,6 +44,7 @@ type ProfileData = {
     joined_at: string;
     followers_count?: number;
     following_count?: number;
+    showcase_game_ids?: number[];
   };
   stats: {
     library: LibraryStats;
@@ -140,23 +141,36 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!profile) return;
-    const savedFavIds = localStorage.getItem(`critiplay_favs_${profile.user.id}`);
-    if (savedFavIds) {
-      try {
-        const parsedIds: (number | string)[] = JSON.parse(savedFavIds);
-        libraryService
-          .getLibrary('all')
-          .then((libraryGames) => {
-            setAllLibraryGames(libraryGames);
-            const favs = libraryGames.filter((g) => parsedIds.includes(g.id));
-            setFavoriteGames(favs);
-          })
-          .catch((e) => console.error('Error loading favs:', e));
-      } catch (e) {
-        console.error('Error parsing favs:', e);
+
+    let targetIds: number[] = [];
+    if (Array.isArray(profile.user.showcase_game_ids) && profile.user.showcase_game_ids.length > 0) {
+      targetIds = profile.user.showcase_game_ids.map(Number);
+      localStorage.setItem(`critiplay_favs_${profile.user.id}`, JSON.stringify(targetIds));
+    } else {
+      const savedFavIds = localStorage.getItem(`critiplay_favs_${profile.user.id}`);
+      if (savedFavIds) {
+        try {
+          targetIds = JSON.parse(savedFavIds).map(Number);
+          if (targetIds.length > 0) {
+            userService.updateShowcase(targetIds).catch(console.error);
+          }
+        } catch (e) {
+          console.error('Error parsing favs:', e);
+        }
       }
     }
-  }, [profile?.user.id]);
+
+    if (targetIds.length > 0) {
+      libraryService
+        .getLibrary('all')
+        .then((libraryGames) => {
+          setAllLibraryGames(libraryGames);
+          const favs = libraryGames.filter((g) => targetIds.includes(Number(g.id)));
+          setFavoriteGames(favs);
+        })
+        .catch((e) => console.error('Error loading favs:', e));
+    }
+  }, [profile?.user.id, profile?.user.showcase_game_ids]);
 
   // Auto-load followers & following when Activity tab is activated
   useEffect(() => {
@@ -212,7 +226,7 @@ export default function ProfilePage() {
     }
   };
 
-  const toggleFavoriteGame = (game: LibraryGame) => {
+  const toggleFavoriteGame = async (game: LibraryGame) => {
     if (!profile) return;
     const isAlreadyFav = favoriteGames.some((g) => g.id === game.id);
 
@@ -228,10 +242,16 @@ export default function ProfilePage() {
     }
 
     setFavoriteGames(nextFavs);
+    const ids = nextFavs.map((g) => Number(g.id));
     localStorage.setItem(
       `critiplay_favs_${profile.user.id}`,
-      JSON.stringify(nextFavs.map((g) => g.id))
+      JSON.stringify(ids)
     );
+    try {
+      await userService.updateShowcase(ids);
+    } catch (e) {
+      console.error('Failed to sync showcase to server:', e);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

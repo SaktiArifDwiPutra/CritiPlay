@@ -33,6 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/users/search', [UserController::class, 'search']);
     Route::get('/users/{id}/profile', [UserController::class, 'publicProfile']);
+    Route::put('/users/showcase', [UserController::class, 'updateShowcase']);
     Route::post('/users/{userId}/follow', [FollowController::class, 'follow']);
     Route::delete('/users/{userId}/follow', [FollowController::class, 'unfollow']);
     Route::get('/users/{userId}/followers', [FollowController::class, 'followers']);

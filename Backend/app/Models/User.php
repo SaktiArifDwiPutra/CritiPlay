@@ -20,6 +20,7 @@ class User extends Authenticatable
         'google_id',
         'otp',
         'otp_expires_at',
+        'showcase_game_ids',
     ];
 
     protected $hidden = [
@@ -33,8 +34,9 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'email_verified_at'   => 'datetime',
+            'password'            => 'hashed',
+            'showcase_game_ids'   => 'array',
         ];
     }
 

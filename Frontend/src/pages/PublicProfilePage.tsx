@@ -16,10 +16,9 @@ import {
 
 import { authService } from '../services/authService';
 import { userService } from '../services/userService';
-import { libraryService, type LibraryGame } from '../services/libraryService';
 import { getStorageUrl } from '../config/api';
 
-import type { PublicProfile, SearchUser } from '../types';
+import type { PublicProfile, SearchUser, ShowcaseGame } from '../types';
 
 const statusLabel = {
   completed: 'Completed',
@@ -51,8 +50,8 @@ export default function PublicProfilePage() {
   const [userList, setUserList] = useState<SearchUser[]>([]);
   const [listLoading, setListLoading] = useState(false);
 
-  // Favorite Games showcase (read from localStorage of target user)
-  const [favoriteGames, setFavoriteGames] = useState<LibraryGame[]>([]);
+  // Showcase games come directly from the API profile response
+  const showcaseGames: ShowcaseGame[] = profile?.showcase_games ?? [];
 
   /*
    * ============================
@@ -98,25 +97,6 @@ export default function PublicProfilePage() {
       isMounted = false;
     };
   }, [userId]);
-
-  // Load favorite games from localStorage for the viewed user
-  useEffect(() => {
-    if (!profile) return;
-    const savedFavIds = localStorage.getItem(`critiplay_favs_${profile.user.id}`);
-    if (!savedFavIds) return;
-    try {
-      const parsedIds: (number | string)[] = JSON.parse(savedFavIds);
-      if (parsedIds.length === 0) return;
-      libraryService
-        .getLibrary('all')
-        .then((games) => {
-          setFavoriteGames(games.filter((g) => parsedIds.includes(g.id)));
-        })
-        .catch(console.error);
-    } catch (e) {
-      console.error('Error parsing favs:', e);
-    }
-  }, [profile?.user.id]);
 
   /*
    * ============================
@@ -419,18 +399,18 @@ export default function PublicProfilePage() {
       </section>
 
       {/* ================= FAVORITE GAMES SHOWCASE ================= */}
-      {favoriteGames.length > 0 && (
+      {showcaseGames.length > 0 && (
         <section className="rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6 sm:p-8 backdrop-blur-md shadow-xl">
           <div className="mb-6 flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-amber-400" />
             <h2 className="text-xl font-bold text-white">Showcase Game Favorit</h2>
             <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-300">
-              {favoriteGames.length}/4 Disematkan
+              {showcaseGames.length}/4 Disematkan
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {favoriteGames.map((game) => (
+            {showcaseGames.map((game) => (
               <div
                 key={game.id}
                 className="group relative flex flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-950/80 transition-all hover:-translate-y-1 hover:border-slate-700 shadow-md"
@@ -448,9 +428,6 @@ export default function PublicProfilePage() {
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                  <div className="absolute top-2 right-2 rounded-md border border-amber-500/20 bg-slate-950/80 px-1.5 py-0.5 text-[10px] font-bold text-amber-400 backdrop-blur-md">
-                    ★ {game.user_review?.rating_overall?.toFixed(1) || 'Fav'}
-                  </div>
                 </Link>
                 <div className="p-3">
                   <Link
