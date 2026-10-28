@@ -60,7 +60,8 @@ class UserController extends Controller
         $query = trim($request->input('q'));
         $currentUserId = $request->user()->id;
 
-        $users = User::whereRaw('LOWER(name) LIKE ?', ['%' . mb_strtolower($query, 'UTF-8') . '%'])
+        // Gunakan ILIKE untuk PostgreSQL (case-insensitive native)
+        $users = User::where('name', 'ILIKE', '%' . $query . '%')
             ->where('id', '!=', $currentUserId) // jangan include diri sendiri
             ->limit(20)
             ->get()
