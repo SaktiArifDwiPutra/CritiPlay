@@ -57,10 +57,10 @@ class UserController extends Controller
             'q' => 'required|string|min:1',
         ]);
 
-        $query = $request->input('q');
+        $query = trim($request->input('q'));
         $currentUserId = $request->user()->id;
 
-        $users = User::where('name', 'like', '%' . $query . '%')
+        $users = User::whereRaw('LOWER(name) LIKE ?', ['%' . mb_strtolower($query, 'UTF-8') . '%'])
             ->where('id', '!=', $currentUserId) // jangan include diri sendiri
             ->limit(20)
             ->get()
