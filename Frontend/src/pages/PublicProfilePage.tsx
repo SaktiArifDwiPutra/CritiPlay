@@ -1,13 +1,24 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
+import {
+  ArrowLeft,
+  Calendar,
+  Gamepad2,
+  Trophy,
+  Sparkles,
+  Activity,
+  UserPlus,
+  UserCheck,
+  Loader2,
+  X,
+  ExternalLink,
+} from 'lucide-react';
 
 import { authService } from '../services/authService';
 import { userService } from '../services/userService';
+import { getStorageUrl } from '../config/api';
 
-import type {
-  PublicProfile,
-  SearchUser
-} from '../types';
+import type { PublicProfile, SearchUser } from '../types';
 
 const statusLabel = {
   completed: 'Completed',
@@ -16,51 +27,37 @@ const statusLabel = {
   dropped: 'Dropped',
 };
 
-const statusColor = {
-  completed: 'bg-green-50 text-green-700',
-  playing: 'bg-blue-50 text-blue-700',
-  plan_to_play: 'bg-yellow-50 text-yellow-700',
-  dropped: 'bg-red-50 text-red-700',
+const statusBadge = {
+  completed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  playing: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+  plan_to_play: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  dropped: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
 };
 
 export default function PublicProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
 
-  const [profile, setProfile] =
-    useState<PublicProfile | null>(null);
+  const [profile, setProfile] = useState<PublicProfile | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
 
-  const [currentUserId, setCurrentUserId] =
-    useState<number | null>(null);
-
-  const [isLoading, setIsLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState('');
-
-  const [isFollowing, setIsFollowing] =
-    useState(false);
-
-  const [followLoading, setFollowLoading] =
-    useState(false);
-
-  const [listType, setListType] =
-    useState<'followers' | 'following' | null>(null);
-
-  const [userList, setUserList] =
-    useState<SearchUser[]>([]);
-
-  const [listLoading, setListLoading] =
-    useState(false);
+  // Social Modal (Followers / Following)
+  const [socialModalType, setSocialModalType] = useState<'followers' | 'following' | null>(null);
+  const [userList, setUserList] = useState<SearchUser[]>([]);
+  const [listLoading, setListLoading] = useState(false);
 
   /*
    * ============================
    * LOAD PROFILE
    * ============================
    */
-
   useEffect(() => {
+    let isMounted = true;
+
     const loadProfile = async () => {
       if (!userId) {
         setError('Profile tidak ditemukan.');
@@ -72,25 +69,30 @@ export default function PublicProfilePage() {
         setIsLoading(true);
         setError('');
 
-        const [data, currentProfile] =
-          await Promise.all([
-            userService.getPublicProfile(userId),
-            authService.getProfile()
-          ]);
+        const [data, currentProfile] = await Promise.all([
+          userService.getPublicProfile(userId),
+          authService.getProfile(),
+        ]);
+
+        if (!isMounted) return;
 
         setProfile(data);
         setCurrentUserId(Number(currentProfile.user.id));
         setIsFollowing(Boolean(data.stats.is_following));
-
       } catch (err) {
+        if (!isMounted) return;
         console.error(err);
         setError('Gagal mengambil data profile.');
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
   }, [userId]);
 
   /*
@@ -98,61 +100,43 @@ export default function PublicProfilePage() {
    * FOLLOW / UNFOLLOW
    * ============================
    */
-
   const handleToggleFollow = async () => {
     if (!profile || followLoading) return;
 
     try {
       setFollowLoading(true);
-
       const targetUserId = String(profile.user.id);
 
       if (isFollowing) {
         await userService.unfollowUser(targetUserId);
-
         setIsFollowing(false);
-
         setProfile((prev) => {
           if (!prev) return prev;
-
           return {
             ...prev,
             stats: {
               ...prev.stats,
-              followers_count: Math.max(
-                0,
-                (prev.stats.followers_count ?? 0) - 1
-              )
-            }
+              followers_count: Math.max(0, (prev.stats.followers_count ?? 0) - 1),
+            },
           };
         });
-
       } else {
         await userService.followUser(targetUserId);
-
         setIsFollowing(true);
-
         setProfile((prev) => {
           if (!prev) return prev;
-
           return {
             ...prev,
             stats: {
               ...prev.stats,
-              followers_count:
-                (prev.stats.followers_count ?? 0) + 1
-            }
+              followers_count: (prev.stats.followers_count ?? 0) + 1,
+            },
           };
         });
       }
-
     } catch (err) {
       console.error(err);
-      alert(
-        err instanceof Error
-          ? err.message
-          : 'Gagal mengubah status follow.'
-      );
+      alert(err instanceof Error ? err.message : 'Gagal mengubah status follow.');
     } finally {
       setFollowLoading(false);
     }
@@ -163,31 +147,20 @@ export default function PublicProfilePage() {
    * OPEN FOLLOWERS / FOLLOWING
    * ============================
    */
-
-  const handleOpenUserList = async (
-    type: 'followers' | 'following'
-  ) => {
+  const handleOpenSocialModal = async (type: 'followers' | 'following') => {
     if (!profile) return;
 
-    if (listType === type) {
-      setListType(null);
-      setUserList([]);
-      return;
-    }
-
     try {
-      setListType(type);
+      setSocialModalType(type);
       setListLoading(true);
 
       const targetUserId = String(profile.user.id);
-
       const users =
         type === 'followers'
           ? await userService.getFollowers(targetUserId)
           : await userService.getFollowing(targetUserId);
 
       setUserList(users);
-
     } catch (err) {
       console.error(err);
       setUserList([]);
@@ -198,55 +171,67 @@ export default function PublicProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-6xl mx-auto py-16 text-center">
-        <p className="text-slate-500 animate-pulse font-medium">
-          Memuat profile...
-        </p>
+      <div className="mx-auto max-w-6xl py-16 text-center">
+        <div className="animate-pulse space-y-6">
+          <div className="h-44 w-full rounded-3xl border border-slate-800 bg-slate-900/60" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="h-64 rounded-3xl border border-slate-800 bg-slate-900/60 md:col-span-2" />
+            <div className="h-64 rounded-3xl border border-slate-800 bg-slate-900/60" />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="max-w-6xl mx-auto py-16 text-center">
-        <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm">
-
-          <p className="text-red-500 font-semibold mb-5">
-            {error || 'Profile tidak ditemukan.'}
+      <div className="mx-auto max-w-xl py-20 text-center">
+        <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-10 backdrop-blur-md shadow-2xl">
+          <Gamepad2 className="mx-auto h-16 w-16 text-slate-600 mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">Profil Tidak Ditemukan</h2>
+          <p className="text-sm text-slate-400 mb-6">
+            {error || 'Pengguna yang kamu cari tidak tersedia atau belum terdaftar.'}
           </p>
-
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="px-5 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 transition-colors"
           >
-            Kembali
+            <ArrowLeft className="h-4 w-4" />
+            <span>Kembali ke Beranda</span>
           </button>
-
         </div>
       </div>
     );
   }
 
   const { user, stats, recent_activity } = profile;
-
-  const isOwnProfile =
-    currentUserId === Number(user.id);
-
+  const isOwnProfile = currentUserId === Number(user.id);
   const library = stats.library;
   const total = library.total_games;
 
-  const completedPercent =
-    total > 0 ? (library.completed / total) * 100 : 0;
+  // Gamer Rank & Score calculation (same algorithm as ProfilePage)
+  const gamerScore = library.completed * 15 + stats.total_reviews * 20 + library.playing * 5;
+  const gamerLevel = Math.max(1, Math.floor(gamerScore / 40) + 1);
 
-  const playingPercent =
-    total > 0 ? (library.playing / total) * 100 : 0;
+  let rankTitle = 'Casual Explorer';
+  let rankGradient = 'from-indigo-400 to-purple-400';
+  if (gamerLevel >= 10) {
+    rankTitle = 'Mythic Completionist';
+    rankGradient = 'from-purple-400 via-pink-400 to-amber-300';
+  } else if (gamerLevel >= 6) {
+    rankTitle = 'Hardcore Critic';
+    rankGradient = 'from-indigo-400 via-purple-400 to-violet-300';
+  } else if (gamerLevel >= 3) {
+    rankTitle = 'Active Backlogger';
+    rankGradient = 'from-blue-400 to-indigo-400';
+  }
 
-  const planPercent =
-    total > 0 ? (library.plan_to_play / total) * 100 : 0;
-
-  const droppedPercent =
-    total > 0 ? (library.dropped / total) * 100 : 0;
+  // Donut chart calculations
+  const completedPercent = total > 0 ? (library.completed / total) * 100 : 0;
+  const playingPercent = total > 0 ? (library.playing / total) * 100 : 0;
+  const planPercent = total > 0 ? (library.plan_to_play / total) * 100 : 0;
+  const droppedPercent = total > 0 ? (library.dropped / total) * 100 : 0;
 
   const completedEnd = completedPercent;
   const playingEnd = completedEnd + playingPercent;
@@ -256,426 +241,420 @@ export default function PublicProfilePage() {
   const donutBackground =
     total > 0
       ? `conic-gradient(
-          #22c55e 0% ${completedEnd}%,
-          #3b82f6 ${completedEnd}% ${playingEnd}%,
-          #eab308 ${playingEnd}% ${planEnd}%,
-          #ef4444 ${planEnd}% ${droppedEnd}%
+          #10b981 0% ${completedEnd}%,
+          #6366f1 ${completedEnd}% ${playingEnd}%,
+          #f59e0b ${playingEnd}% ${planEnd}%,
+          #f43f5e ${planEnd}% ${droppedEnd}%
         )`
-      : '#e2e8f0';
+      : '#1e293b';
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
+    <div className="mx-auto max-w-6xl pb-16 space-y-8">
+      {/* ================= BACK BUTTON ================= */}
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="group flex w-fit items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-2 text-sm font-semibold text-slate-300 shadow-sm transition-all duration-150 hover:scale-105 hover:border-slate-700 hover:text-white active:scale-95"
+        >
+          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5 text-indigo-400" />
+          <span>Kembali</span>
+        </button>
 
-      {/* ================= PROFILE HEADER ================= */}
+        {isOwnProfile && (
+          <Link
+            to="/profile"
+            className="flex items-center gap-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-1.5 text-xs font-bold text-indigo-300 hover:bg-indigo-500/20 transition-all"
+          >
+            <span>Edit Profil Saya &rarr;</span>
+          </Link>
+        )}
+      </div>
 
-      <section className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
+      {/* ================= HERO PROFILE HEADER ================= */}
+      <section className="relative overflow-hidden rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6 sm:p-8 shadow-xl backdrop-blur-md">
+        {/* Subtle decorative glow */}
+        <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-indigo-600/10 blur-3xl" />
+        <div className="pointer-events-none absolute -left-20 -bottom-20 h-64 w-64 rounded-full bg-purple-600/10 blur-3xl" />
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-
-          <div className="flex items-center gap-5">
-
-            {/* AVATAR */}
-
-            <div className="w-24 h-24 rounded-full bg-slate-100 overflow-hidden border-4 border-white shadow-md flex items-center justify-center shrink-0">
-
-              {user.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="text-3xl font-bold text-slate-400">
-                  {user.name.charAt(0).toUpperCase()}
-                </span>
-              )}
-
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            {/* AVATAR WITH BADGE */}
+            <div className="relative group shrink-0">
+              <div className="h-24 w-24 rounded-2xl bg-slate-800 p-0.5 ring-2 ring-indigo-500/30 overflow-hidden shadow-lg shadow-indigo-950/40">
+                {user.avatar ? (
+                  <img
+                    src={getStorageUrl(user.avatar) || user.avatar}
+                    alt={user.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-tr from-indigo-700 to-purple-700 text-3xl font-extrabold text-white">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* USER INFO */}
-
+            {/* USER INFO & BADGE */}
             <div>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                  {user.name}
+                </h1>
 
-              <h1 className="text-3xl font-extrabold text-slate-900">
-                {user.name}
-              </h1>
-
-              <p className="text-sm text-slate-400 mt-2">
-                Bergabung sejak {user.joined_at}
-              </p>
-
-              {/* FOLLOW STATS */}
-
-              <div className="flex items-center gap-5 mt-4">
-
-                <button
-                  type="button"
-                  onClick={() => handleOpenUserList('followers')}
-                  className="text-left hover:text-blue-600 transition-colors"
-                >
-                  <span className="font-extrabold text-slate-800">
-                    {stats.followers_count ?? 0}
+                {/* Gamer Rank / Badge */}
+                <div className="flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-0.5 text-xs font-bold text-purple-300 shadow-sm">
+                  <Trophy className="h-3.5 w-3.5 text-amber-400" />
+                  <span className={`bg-gradient-to-r ${rankGradient} bg-clip-text text-transparent`}>
+                    Lvl {gamerLevel} • {rankTitle}
                   </span>
-
-                  <span className="ml-1 text-sm text-slate-500">
-                    Followers
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleOpenUserList('following')}
-                  className="text-left hover:text-blue-600 transition-colors"
-                >
-                  <span className="font-extrabold text-slate-800">
-                    {stats.following_count ?? 0}
-                  </span>
-
-                  <span className="ml-1 text-sm text-slate-500">
-                    Following
-                  </span>
-                </button>
-
+                </div>
               </div>
 
-            </div>
+              <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-slate-400">
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-slate-500" />
+                  Bergabung sejak {user.joined_at}
+                </span>
+              </div>
 
+              {/* FOLLOWER / FOLLOWING BUTTONS */}
+              <div className="mt-4 flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => handleOpenSocialModal('followers')}
+                  className="group flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-800/50 px-3 py-1.5 text-xs transition-all hover:border-slate-700 hover:bg-slate-800 active:scale-95"
+                >
+                  <span className="font-extrabold text-white group-hover:text-indigo-400 transition-colors">
+                    {stats.followers_count ?? 0}
+                  </span>
+                  <span className="text-slate-400">Followers</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleOpenSocialModal('following')}
+                  className="group flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-800/50 px-3 py-1.5 text-xs transition-all hover:border-slate-700 hover:bg-slate-800 active:scale-95"
+                >
+                  <span className="font-extrabold text-white group-hover:text-indigo-400 transition-colors">
+                    {stats.following_count ?? 0}
+                  </span>
+                  <span className="text-slate-400">Following</span>
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-col items-center gap-3">
+          {/* ACTION / STATS SECTION */}
+          <div className="flex flex-wrap items-center md:flex-col md:items-end gap-3">
+            {/* Quick Stats Cards */}
+            <div className="flex gap-3">
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3.5 text-center min-w-[100px]">
+                <p className="text-2xl font-extrabold text-indigo-400">{library.total_games}</p>
+                <p className="mt-0.5 text-[11px] font-semibold text-slate-400">Koleksi Game</p>
+              </div>
 
-            {/* TOTAL GAMES */}
-
-            <div className="bg-blue-50 text-blue-700 rounded-2xl px-5 py-4 text-center">
-
-              <p className="text-2xl font-extrabold">
-                {library.total_games}
-              </p>
-
-              <p className="text-sm font-semibold">
-                Games in Library
-              </p>
-
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3.5 text-center min-w-[100px]">
+                <p className="text-2xl font-extrabold text-purple-400">{stats.total_reviews}</p>
+                <p className="mt-0.5 text-[11px] font-semibold text-slate-400">Ulasan Dibuat</p>
+              </div>
             </div>
 
-            {/* FOLLOW BUTTON */}
-
+            {/* FOLLOW / UNFOLLOW BUTTON */}
             {!isOwnProfile && (
               <button
                 type="button"
                 onClick={handleToggleFollow}
                 disabled={followLoading}
-                className={`w-full px-5 py-3 rounded-xl font-bold transition-colors ${
+                className={`flex w-full items-center justify-center gap-2 rounded-xl py-2.5 px-5 text-xs font-bold transition-all shadow-md active:scale-95 ${
                   isFollowing
-                    ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                    ? 'border border-slate-700 bg-slate-800 text-slate-300 hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-400'
+                    : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30'
                 } disabled:opacity-60 disabled:cursor-not-allowed`}
               >
-                {followLoading
-                  ? 'Memproses...'
-                  : isFollowing
-                    ? 'Following'
-                    : 'Follow'}
+                {followLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Memproses...</span>
+                  </>
+                ) : isFollowing ? (
+                  <>
+                    <UserCheck className="h-4 w-4 text-emerald-400" />
+                    <span>Mengikuti (Following)</span>
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="h-4 w-4" />
+                    <span>+ Ikuti Profil</span>
+                  </>
+                )}
               </button>
             )}
-
           </div>
-
         </div>
-
       </section>
 
-      {/* ================= FOLLOW LIST ================= */}
-
-      {listType && (
-        <section className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
-
-          <div className="flex items-center justify-between mb-6">
-
-            <h2 className="text-2xl font-bold text-slate-800">
-              {listType === 'followers'
-                ? 'Followers'
-                : 'Following'}
-            </h2>
-
-            <button
-              type="button"
-              onClick={() => {
-                setListType(null);
-                setUserList([]);
-              }}
-              className="text-sm font-semibold text-slate-400 hover:text-slate-700"
-            >
-              Tutup
-            </button>
-
+      {/* ================= LIBRARY SUMMARY & REVIEWS ================= */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* DONUT CHART LIBRARY SUMMARY */}
+        <div className="lg:col-span-2 rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6 sm:p-8 backdrop-blur-md shadow-xl">
+          <div className="flex items-center gap-2 mb-6">
+            <h2 className="text-xl font-bold text-white">Ringkasan Library</h2>
+            <span className="rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-0.5 text-xs font-semibold text-indigo-300">
+              {total} Total Game
+            </span>
           </div>
 
-          {listLoading ? (
-            <p className="text-center py-8 text-slate-400 animate-pulse">
-              Memuat...
-            </p>
-          ) : userList.length === 0 ? (
-            <p className="text-center py-8 text-slate-400">
-              Belum ada user.
-            </p>
-          ) : (
-            <div className="space-y-2">
-
-              {userList.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors"
-                >
-
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/profile/${item.id}`)}
-                    className="flex items-center gap-3 text-left"
-                  >
-
-                    <div className="w-10 h-10 rounded-full bg-blue-100 overflow-hidden flex items-center justify-center shrink-0">
-
-                      {item.avatar ? (
-                        <img
-                          src={item.avatar}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="font-bold text-blue-600">
-                          {item.name.charAt(0).toUpperCase()}
-                        </span>
-                      )}
-
-                    </div>
-
-                    <span className="font-semibold text-slate-800">
-                      {item.name}
-                    </span>
-
-                  </button>
-
-                </div>
-              ))}
-
-            </div>
-          )}
-
-        </section>
-      )}
-
-      {/* ================= LIBRARY + REVIEWS ================= */}
-
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-        {/* LIBRARY SUMMARY */}
-
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
-
-          <h2 className="text-2xl font-bold text-slate-800 mb-8">
-            Library Summary
-          </h2>
-
-          <div className="flex flex-col md:flex-row items-center gap-10">
-
+          <div className="flex flex-col sm:flex-row items-center gap-8">
+            {/* Donut Chart */}
             <div
-              className="w-52 h-52 rounded-full flex items-center justify-center shrink-0"
+              className="relative flex h-48 w-48 shrink-0 items-center justify-center rounded-full shadow-lg"
               style={{ background: donutBackground }}
             >
-              <div className="w-32 h-32 rounded-full bg-white flex flex-col items-center justify-center shadow-inner">
-
-                <span className="text-3xl font-extrabold text-slate-800">
-                  {total}
+              <div className="flex h-32 w-32 flex-col items-center justify-center rounded-full bg-slate-900 border border-slate-800/80 shadow-inner">
+                <span className="text-3xl font-black text-white">{total}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Total Game
                 </span>
-
-                <span className="text-xs font-semibold text-slate-400">
-                  TOTAL
-                </span>
-
               </div>
             </div>
 
-            <div className="w-full space-y-4">
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="w-3 h-3 rounded-full bg-green-500" />
-                  <span className="font-medium text-slate-600">
-                    Completed
+            {/* Legend Stats */}
+            <div className="w-full flex-1 space-y-3.5">
+              {/* Completed */}
+              <div className="flex items-center justify-between text-xs sm:text-sm">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-3 w-3 rounded-full bg-emerald-500 shadow-sm" />
+                  <span className="font-semibold text-slate-200">Completed</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-white">{library.completed}</span>
+                  <span className="text-xs text-slate-500 font-medium">
+                    ({completedPercent.toFixed(0)}%)
                   </span>
                 </div>
-
-                <span className="font-bold text-slate-800">
-                  {library.completed}
-                </span>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="w-3 h-3 rounded-full bg-blue-500" />
-                  <span className="font-medium text-slate-600">
-                    Playing
+              {/* Playing */}
+              <div className="flex items-center justify-between text-xs sm:text-sm">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-3 w-3 rounded-full bg-indigo-500 shadow-sm" />
+                  <span className="font-semibold text-slate-200">Playing</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-white">{library.playing}</span>
+                  <span className="text-xs text-slate-500 font-medium">
+                    ({playingPercent.toFixed(0)}%)
                   </span>
                 </div>
-
-                <span className="font-bold text-slate-800">
-                  {library.playing}
-                </span>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="w-3 h-3 rounded-full bg-yellow-500" />
-                  <span className="font-medium text-slate-600">
-                    Plan to Play
+              {/* Plan to Play */}
+              <div className="flex items-center justify-between text-xs sm:text-sm">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-3 w-3 rounded-full bg-amber-500 shadow-sm" />
+                  <span className="font-semibold text-slate-200">Plan to Play</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-white">{library.plan_to_play}</span>
+                  <span className="text-xs text-slate-500 font-medium">
+                    ({planPercent.toFixed(0)}%)
                   </span>
                 </div>
-
-                <span className="font-bold text-slate-800">
-                  {library.plan_to_play}
-                </span>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="w-3 h-3 rounded-full bg-red-500" />
-                  <span className="font-medium text-slate-600">
-                    Dropped
+              {/* Dropped */}
+              <div className="flex items-center justify-between text-xs sm:text-sm">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-3 w-3 rounded-full bg-rose-500 shadow-sm" />
+                  <span className="font-semibold text-slate-200">Dropped</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-white">{library.dropped}</span>
+                  <span className="text-xs text-slate-500 font-medium">
+                    ({droppedPercent.toFixed(0)}%)
                   </span>
                 </div>
-
-                <span className="font-bold text-slate-800">
-                  {library.dropped}
-                </span>
               </div>
-
             </div>
-
           </div>
         </div>
 
         {/* REVIEW STATS */}
-
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
-
-          <h2 className="text-2xl font-bold text-slate-800 mb-8">
-            Review Stats
-          </h2>
-
-          <div className="flex flex-col items-center justify-center h-52">
-
-            <p className="text-4xl font-extrabold text-slate-800">
-              {stats.total_reviews}
-            </p>
-
-            <p className="text-slate-500 font-medium">
-              Total Reviews
-            </p>
-
+        <div className="flex flex-col justify-between rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6 sm:p-8 backdrop-blur-md shadow-xl">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-5 w-5 text-purple-400" />
+              <h2 className="text-xl font-bold text-white">Statistik Ulasan</h2>
+            </div>
+            <p className="text-xs text-slate-400">Total ulasan dan kontribusi komunitas</p>
           </div>
 
-        </div>
+          <div className="my-6 text-center">
+            <p className="text-5xl font-black text-purple-400">{stats.total_reviews}</p>
+            <p className="mt-1 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              Ulasan Diterbitkan
+            </p>
+          </div>
 
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-3.5 text-center">
+            <p className="text-[11px] text-slate-400">Tingkat Penyelesaian (Completion Rate)</p>
+            <p className="text-base font-bold text-emerald-400 mt-0.5">
+              {completedPercent.toFixed(1)}% dari total koleksi
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* ================= RECENT ACTIVITY ================= */}
-
-      <section className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
-
+      <section className="rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6 sm:p-8 backdrop-blur-md shadow-xl">
         <div className="flex items-center justify-between mb-6">
-
-          <h2 className="text-2xl font-bold text-slate-800">
-            Recent Activity
-          </h2>
-
-          <span className="text-sm text-slate-400">
-            Last 5 updates
-          </span>
-
+          <div className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-indigo-400" />
+            <h2 className="text-xl font-bold text-white">Aktivitas Terakhir</h2>
+          </div>
+          <span className="text-xs text-slate-400">5 pembaruan koleksi terakhir</span>
         </div>
 
         {recent_activity.length === 0 ? (
-
-          <div className="py-10 text-center text-slate-500">
-            Belum ada aktivitas Library.
+          <div className="py-12 text-center text-slate-500 rounded-2xl border border-dashed border-slate-800 bg-slate-950/40">
+            <Gamepad2 className="mx-auto h-8 w-8 text-slate-600 mb-2 opacity-50" />
+            <p className="text-sm font-semibold text-slate-400">Belum ada aktivitas di Library</p>
+            <p className="text-xs text-slate-500 mt-0.5">Pengguna ini belum menambahkan game ke koleksinya.</p>
           </div>
-
         ) : (
-
-          <div className="space-y-4">
-
+          <div className="space-y-3">
             {recent_activity.map((game) => {
-
-              const status =
-                game.pivot?.status ?? 'plan_to_play';
+              const status = game.pivot?.status ?? 'plan_to_play';
 
               return (
                 <div
                   key={game.id}
-                  className="flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 transition-colors"
+                  className="flex items-center gap-4 rounded-2xl border border-slate-800/70 bg-slate-950/40 p-3 hover:border-slate-700/80 hover:bg-slate-800/40 transition-all"
                 >
-
-                  <div className="w-14 h-20 rounded-lg overflow-hidden bg-slate-100 shrink-0">
-
+                  <Link
+                    to={`/game/${game.id}`}
+                    className="h-16 w-12 shrink-0 overflow-hidden rounded-xl bg-slate-900 ring-1 ring-white/10"
+                  >
                     {game.cover_url ? (
                       <img
                         src={game.cover_url}
                         alt={game.name}
-                        className="w-full h-full object-cover"
+                        className="h-full w-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">
-                        No Image
+                      <div className="flex h-full w-full items-center justify-center text-[9px] text-slate-600">
+                        No Cover
                       </div>
                     )}
-
-                  </div>
+                  </Link>
 
                   <div className="flex-1 min-w-0">
-
-                    <h3 className="font-bold text-slate-800 truncate">
+                    <Link
+                      to={`/game/${game.id}`}
+                      className="block text-sm font-bold text-white truncate hover:text-indigo-400 transition-colors"
+                    >
                       {game.name}
-                    </h3>
+                    </Link>
 
-                    <p className="text-sm text-slate-400 mt-1">
-                      {game.release_year ?? 'Unknown'}
-                    </p>
-
+                    <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                      <span>{game.release_year ?? 'TBA'}</span>
+                      {game.platforms && game.platforms.length > 0 && (
+                        <>
+                          <span>•</span>
+                          <span className="truncate">{game.platforms.slice(0, 2).join(', ')}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   <span
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap ${
-                      statusColor[status]
+                    className={`rounded-lg border px-3 py-1 text-xs font-bold whitespace-nowrap ${
+                      statusBadge[status] || statusBadge.plan_to_play
                     }`}
                   >
-                    {statusLabel[status]}
+                    {statusLabel[status] || 'Plan to Play'}
                   </span>
-
                 </div>
               );
             })}
-
           </div>
-
         )}
-
       </section>
 
-      {/* ================= BACK BUTTON ================= */}
-
-      <div className="pb-4">
-
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="px-5 py-3 rounded-xl bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition-colors"
+      {/* ================= SOCIAL USERS MODAL ================= */}
+      {socialModalType && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm overflow-y-auto"
+          onClick={() => setSocialModalType(null)}
         >
-          ← Kembali
-        </button>
+          <div
+            className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl text-slate-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-800/80 pb-4 mb-4">
+              <div>
+                <h3 className="text-base font-bold text-white">
+                  {socialModalType === 'followers' ? 'Pengikut (Followers)' : 'Mengikuti (Following)'}
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">Daftar pengguna CritiPlay</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSocialModalType(null)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
 
-      </div>
-
+            <div className="max-h-80 overflow-y-auto space-y-2 pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {listLoading ? (
+                <div className="py-8 text-center text-slate-400">
+                  <Loader2 className="mx-auto h-6 w-6 animate-spin text-indigo-500 mb-2" />
+                  <span className="text-xs">Memuat daftar pengguna...</span>
+                </div>
+              ) : userList.length === 0 ? (
+                <p className="py-8 text-center text-xs text-slate-500">
+                  {socialModalType === 'followers'
+                    ? 'Belum ada pengikut.'
+                    : 'Belum mengikuti siapa pun.'}
+                </p>
+              ) : (
+                userList.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setSocialModalType(null);
+                      navigate(`/profile/${item.id}`);
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl border border-slate-800/60 bg-slate-950/40 p-2.5 text-left transition-colors hover:border-slate-700 hover:bg-slate-800/60"
+                  >
+                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-sm font-bold border border-indigo-500/30">
+                      {item.avatar ? (
+                        <img
+                          src={getStorageUrl(item.avatar) || item.avatar}
+                          alt={item.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        item.name.charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-bold text-white">{item.name}</p>
+                      <p className="text-[10px] text-slate-400">Lihat profil pengguna</p>
+                    </div>
+                    <ExternalLink className="h-3.5 w-3.5 text-slate-500" />
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
