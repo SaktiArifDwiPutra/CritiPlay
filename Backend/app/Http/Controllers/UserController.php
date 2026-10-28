@@ -36,11 +36,15 @@ class UserController extends Controller
 
         // Resolve showcase games from stored IDs
         $showcaseGameIds = $user->showcase_game_ids ?? [];
+        if (is_string($showcaseGameIds)) {
+            $showcaseGameIds = json_decode($showcaseGameIds, true) ?? [];
+        }
         $showcaseGames = [];
-        if (!empty($showcaseGameIds)) {
-            $showcaseGames = Game::whereIn('id', $showcaseGameIds)
-                ->get()
-                ->sortBy(fn($g) => array_search($g->id, $showcaseGameIds))
+        if (!empty($showcaseGameIds) && is_array($showcaseGameIds)) {
+            $intIds = array_values(array_map('intval', $showcaseGameIds));
+            $games = Game::whereIn('id', $intIds)->get();
+            $orderMap = array_flip($intIds);
+            $showcaseGames = $games->sortBy(fn($g) => $orderMap[$g->id] ?? 999)
                 ->values()
                 ->map(fn($g) => [
                     'id'           => $g->id,
@@ -76,15 +80,18 @@ class UserController extends Controller
     public function updateShowcase(Request $request)
     {
         $request->validate([
-            'game_ids'   => 'required|array|max:4',
+            'game_ids'   => 'present|array|max:4',
             'game_ids.*' => 'integer|exists:games,id',
         ]);
 
         $user = $request->user();
-        $user->showcase_game_ids = array_values(array_unique($request->game_ids));
+        $user->showcase_game_ids = array_values(array_unique(array_map('intval', $request->input('game_ids', []))));
         $user->save();
 
-        return response()->json(['message' => 'Showcase berhasil diperbarui.']);
+        return response()->json([
+            'message' => 'Showcase berhasil diperbarui.',
+            'showcase_game_ids' => $user->showcase_game_ids,
+        ]);
     }
 
     public function search(Request $request)

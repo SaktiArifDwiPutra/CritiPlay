@@ -399,16 +399,26 @@ export default function PublicProfilePage() {
       </section>
 
       {/* ================= FAVORITE GAMES SHOWCASE ================= */}
-      {showcaseGames.length > 0 && (
-        <section className="rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6 sm:p-8 backdrop-blur-md shadow-xl">
-          <div className="mb-6 flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-amber-400" />
-            <h2 className="text-xl font-bold text-white">Showcase Game Favorit</h2>
+      <section className="rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6 sm:p-8 backdrop-blur-md shadow-xl">
+        <div className="mb-6 flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-amber-400" />
+          <h2 className="text-xl font-bold text-white">Showcase Game Favorit</h2>
+          {showcaseGames.length > 0 && (
             <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-300">
               {showcaseGames.length}/4 Disematkan
             </span>
-          </div>
+          )}
+        </div>
 
+        {showcaseGames.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 bg-slate-950/40 p-8 text-center">
+            <Gamepad2 className="h-8 w-8 text-slate-600 mb-2" />
+            <p className="text-sm font-semibold text-slate-400">Belum ada game favorit yang disematkan</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Pengguna ini belum memilih game untuk ditampilkan di showcase profilnya.
+            </p>
+          </div>
+        ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {showcaseGames.map((game) => (
               <div
@@ -441,8 +451,8 @@ export default function PublicProfilePage() {
               </div>
             ))}
           </div>
-        </section>
-      )}
+        )}
+      </section>
 
       {/* ================= LIBRARY SUMMARY & REVIEWS ================= */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
