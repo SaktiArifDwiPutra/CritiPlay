@@ -13,13 +13,15 @@ import {
   X,
   ExternalLink,
   Crown,
+  Zap,
 } from 'lucide-react';
 
 import { authService } from '../services/authService';
 import { userService } from '../services/userService';
 import { getStorageUrl } from '../config/api';
 
-import type { PublicProfile, SearchUser, ShowcaseGame } from '../types';
+import type { PublicProfile, SearchUser, ShowcaseGame, GamerStats } from '../types';
+import { GamerBadgePill, getTierConfig } from '../components/GamerBadge';
 
 const statusLabel = {
   completed: 'Completed',
@@ -214,22 +216,22 @@ export default function PublicProfilePage() {
   const library = stats.library;
   const total = library.total_games;
 
-  // Gamer Rank & Score calculation (same algorithm as ProfilePage)
-  const gamerScore = library.completed * 15 + stats.total_reviews * 20 + library.playing * 5;
-  const gamerLevel = Math.max(1, Math.floor(gamerScore / 40) + 1);
+  // Gamer level & stats from backend (or fallback)
+  const gamerStats: GamerStats = profile.gamer_stats || {
+    level: 1,
+    xp: library.completed * 30 + stats.total_reviews * 50 + library.playing * 10,
+    current_level_xp: 0,
+    next_level_xp: 60,
+    xp_needed: 60,
+    progress_percent: 10,
+    badge: {
+      tier: 'bronze',
+      title: 'Novice Explorer',
+      color: '#CD7F32',
+    },
+  };
 
-  let rankTitle = 'Casual Explorer';
-  let rankGradient = 'from-indigo-400 to-purple-400';
-  if (gamerLevel >= 10) {
-    rankTitle = 'Mythic Completionist';
-    rankGradient = 'from-purple-400 via-pink-400 to-amber-300';
-  } else if (gamerLevel >= 6) {
-    rankTitle = 'Hardcore Critic';
-    rankGradient = 'from-indigo-400 via-purple-400 to-violet-300';
-  } else if (gamerLevel >= 3) {
-    rankTitle = 'Active Backlogger';
-    rankGradient = 'from-blue-400 to-indigo-400';
-  }
+  const tierCfg = getTierConfig(gamerStats.badge?.tier);
 
   // Donut chart calculations
   const completedPercent = total > 0 ? (library.completed / total) * 100 : 0;
@@ -285,7 +287,7 @@ export default function PublicProfilePage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
             {/* AVATAR WITH BADGE */}
             <div className="relative group shrink-0">
-              <div className="h-24 w-24 rounded-2xl bg-slate-800 p-0.5 ring-2 ring-indigo-500/30 overflow-hidden shadow-lg shadow-indigo-950/40">
+              <div className={`h-24 w-24 rounded-2xl bg-slate-800 p-0.5 overflow-hidden shadow-lg ${tierCfg.ringStyle}`}>
                 {user.avatar ? (
                   <img
                     src={getStorageUrl(user.avatar) || user.avatar}
@@ -307,13 +309,8 @@ export default function PublicProfilePage() {
                   {user.name}
                 </h1>
 
-                {/* Gamer Rank / Badge */}
-                <div className="flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-0.5 text-xs font-bold text-purple-300 shadow-sm">
-                  <Trophy className="h-3.5 w-3.5 text-amber-400" />
-                  <span className={`bg-gradient-to-r ${rankGradient} bg-clip-text text-transparent`}>
-                    Lvl {gamerLevel} • {rankTitle}
-                  </span>
-                </div>
+                {/* Gamer Rank Badge */}
+                <GamerBadgePill stats={gamerStats} size="sm" />
               </div>
 
               <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-slate-400">
@@ -321,6 +318,33 @@ export default function PublicProfilePage() {
                   <Calendar className="h-3.5 w-3.5 text-slate-500" />
                   Bergabung sejak {user.joined_at}
                 </span>
+              </div>
+
+              {/* XP LEVEL PROGRESS BAR */}
+              <div className="mt-3.5 max-w-md rounded-2xl border border-slate-800/80 bg-slate-950/70 p-3 shadow-inner">
+                <div className="flex items-center justify-between text-[11px] font-bold mb-1.5">
+                  <span className="flex items-center gap-1 text-amber-300">
+                    <Zap className="h-3.5 w-3.5 text-amber-400" />
+                    Level {gamerStats.level} ({gamerStats.xp} Total XP)
+                  </span>
+                  <span className="text-slate-400">
+                    {gamerStats.progress_percent}%
+                  </span>
+                </div>
+
+                {/* Progress track */}
+                <div className="h-2 w-full rounded-full bg-slate-800/80 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-amber-400 via-amber-500 to-indigo-500 transition-all duration-700"
+                    style={{ width: `${gamerStats.progress_percent}%` }}
+                  />
+                </div>
+
+                <div className="mt-1.5 text-[10px] text-slate-400">
+                  {gamerStats.xp_needed > 0
+                    ? `${gamerStats.xp_needed} XP lagi menuju Level ${gamerStats.level + 1}`
+                    : 'Level Maksimal'}
+                </div>
               </div>
 
               {/* FOLLOWER / FOLLOWING BUTTONS */}

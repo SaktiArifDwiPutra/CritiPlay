@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Star, ThumbsUp, MessageSquare, Edit3, Trash2 } from 'lucide-react';
 import type { Review } from '../types';
 import { RATING_DESCRIPTIONS } from './StarRatingInput';
+import { GamerAvatar, GamerUserName, GamerBadgePill } from './GamerBadge';
 
 interface ReviewCardProps {
   review: Review;
@@ -39,24 +40,24 @@ export default function ReviewCard({
           onClick={handleOpenProfile}
           className="group flex items-center gap-3 text-left"
         >
-          {/* User Avatar */}
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-400 font-bold border border-indigo-500/30 overflow-hidden shadow-sm">
-            {review.userAvatar ? (
-              <img
-                src={review.userAvatar}
-                alt={review.userName}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span>{review.userName?.charAt(0).toUpperCase() ?? 'U'}</span>
-            )}
-          </div>
+          {/* User Avatar with Tier Ring */}
+          <GamerAvatar
+            avatar={review.userAvatar}
+            name={review.userName}
+            stats={review.gamerStats}
+            sizeClass="h-11 w-11"
+          />
 
           <div>
-            <div className="flex items-center gap-2">
-              <p className="font-bold text-white transition-colors group-hover:text-indigo-400">
-                {review.userName}
-              </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <GamerUserName
+                name={review.userName}
+                stats={review.gamerStats}
+                className="text-sm font-bold"
+              />
+              {review.gamerStats && (
+                <GamerBadgePill stats={review.gamerStats} size="xs" />
+              )}
               {isOwner && (
                 <span className="rounded-full bg-indigo-500/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-300 border border-indigo-500/30">
                   Anda

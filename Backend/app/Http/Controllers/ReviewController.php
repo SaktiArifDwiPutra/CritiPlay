@@ -25,6 +25,7 @@ class ReviewController extends Controller
                     'userId'         => (string) $review->user_id,
                     'userName'       => $review->user->name ?? 'Unknown',
                     'userAvatar'     => $review->user->avatar ? asset('storage/' . $review->user->avatar) : null,
+                    'gamerStats'     => $review->user ? $review->user->getGamerStats() : null,
                     'ratingGameplay' => $review->rating_gameplay,
                     'ratingStory'    => $review->rating_story,
                     'ratingVisual'   => $review->rating_visual,
@@ -69,6 +70,7 @@ class ReviewController extends Controller
                     'userAvatar'     => $review->user && $review->user->avatar
                         ? (str_starts_with($review->user->avatar, 'http') ? $review->user->avatar : asset('storage/' . $review->user->avatar))
                         : null,
+                    'gamerStats'     => $review->user ? $review->user->getGamerStats() : null,
                     'ratingGameplay' => (float) $review->rating_gameplay,
                     'ratingStory'    => (float) $review->rating_story,
                     'ratingVisual'   => (float) $review->rating_visual,

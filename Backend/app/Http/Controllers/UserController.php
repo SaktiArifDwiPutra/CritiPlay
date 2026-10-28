@@ -71,6 +71,7 @@ class UserController extends Controller
             ],
             'recent_activity'  => $recentGames,
             'showcase_games'   => $showcaseGames,
+            'gamer_stats'      => $user->getGamerStats(),
         ], 200);
     }
 

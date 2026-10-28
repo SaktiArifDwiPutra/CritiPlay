@@ -24,6 +24,7 @@ class ReviewDiscussionController extends Controller
                 'userId'     => (string) $d->user_id,
                 'userName'   => $d->user->name ?? 'Unknown',
                 'userAvatar' => $d->user->avatar ? asset('storage/' . $d->user->avatar) : null,
+                'gamerStats' => $d->user ? $d->user->getGamerStats() : null,
                 'content'    => $d->content,
                 'dateAdded'  => $d->created_at->toISOString(),
             ]);
@@ -57,6 +58,7 @@ class ReviewDiscussionController extends Controller
                 'userId'     => (string) $discussion->user_id,
                 'userName'   => $discussion->user->name,
                 'userAvatar' => $discussion->user->avatar ? asset('storage/' . $discussion->user->avatar) : null,
+                'gamerStats' => $discussion->user ? $discussion->user->getGamerStats() : null,
                 'content'    => $discussion->content,
                 'dateAdded'  => $discussion->created_at->toISOString(),
             ],

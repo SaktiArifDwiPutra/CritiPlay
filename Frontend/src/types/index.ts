@@ -30,6 +30,30 @@ export interface RatingAspect {
   score: number;  
 }
 
+export type GamerTier = 'bronze' | 'silver' | 'gold' | 'platinum' | 'mythic';
+
+export interface GamerBadge {
+  tier: GamerTier;
+  title: string;
+  color: string;
+}
+
+export interface GamerStats {
+  level: number;
+  xp: number;
+  current_level_xp: number;
+  next_level_xp: number;
+  xp_needed: number;
+  progress_percent: number;
+  badge: GamerBadge;
+  breakdown?: {
+    completed_count: number;
+    reviews_count: number;
+    helpful_received: number;
+    discussions_count: number;
+  };
+}
+
 export interface Review {
   id: string;
   gameId: string;
@@ -37,6 +61,7 @@ export interface Review {
 
   userName: string;
   userAvatar: string | null;
+  gamerStats?: GamerStats | null;
 
   ratingGameplay: number;
   ratingStory: number;
@@ -55,6 +80,7 @@ export interface ReviewDiscussion {
   userId: string;
   userName: string;
   userAvatar: string | null;
+  gamerStats?: GamerStats | null;
   content: string;
   dateAdded: string;
 }
@@ -112,4 +138,5 @@ export interface PublicProfile {
 
   recent_activity: PublicProfileGame[];
   showcase_games: ShowcaseGame[];
+  gamer_stats?: GamerStats;
 }

@@ -23,6 +23,7 @@ import { reviewService } from '../services/reviewService';
 import type { Game, Review, ReviewDiscussion, RatingAspect } from '../types';
 import ReviewCard from '../components/ReviewCard';
 import ReviewFormModal from '../components/ReviewFormModal';
+import { GamerAvatar, GamerUserName, GamerBadgePill, getTierConfig } from '../components/GamerBadge';
 import StarRatingInput, { RATING_DESCRIPTIONS } from '../components/StarRatingInput';
 import { libraryService } from '../services/libraryService';
 import type { LibraryStatus } from '../services/libraryService';
@@ -881,25 +882,27 @@ export default function GameDetail() {
                 ) : (
                   discussions.map((discussion) => (
                     <div key={discussion.id} className="flex gap-3">
-                      {/* Avatar */}
-                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden">
-                        {discussion.userAvatar ? (
-                          <img
-                            src={discussion.userAvatar}
-                            alt={discussion.userName}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          discussion.userName.charAt(0).toUpperCase()
-                        )}
-                      </div>
+                      {/* Avatar with Tier Ring */}
+                      <GamerAvatar
+                        avatar={discussion.userAvatar}
+                        name={discussion.userName}
+                        stats={discussion.gamerStats}
+                        sizeClass="h-8 w-8"
+                      />
 
                       {/* Content Bubble */}
-                      <div className="flex-1 rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <p className="text-xs font-bold text-white">
-                            {discussion.userName}
-                          </p>
+                      <div className={`flex-1 rounded-xl border p-3.5 transition-all ${getTierConfig(discussion.gamerStats?.badge?.tier).cardBorder}`}>
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <GamerUserName
+                              name={discussion.userName}
+                              stats={discussion.gamerStats}
+                              className="text-xs"
+                            />
+                            {discussion.gamerStats && (
+                              <GamerBadgePill stats={discussion.gamerStats} size="xs" />
+                            )}
+                          </div>
 
                           {String(discussion.userId) === String(currentUserId) && (
                             <button

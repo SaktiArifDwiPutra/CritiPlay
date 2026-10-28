@@ -212,6 +212,7 @@ class AuthController extends Controller
                 'avg_ratings'   => $avgRatings,
             ],
             'recent_activity' => $recentGames,
+            'gamer_stats'     => $user->getGamerStats(),
         ], 200);
     }
 
