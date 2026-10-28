@@ -60,9 +60,8 @@ class UserController extends Controller
         $query = trim($request->input('q'));
         $currentUserId = $request->user()->id;
 
-        // Gunakan ILIKE untuk PostgreSQL (case-insensitive native)
         $users = User::where('name', 'ILIKE', '%' . $query . '%')
-            ->where('id', '!=', $currentUserId) // jangan include diri sendiri
+            ->where('id', '!=', $currentUserId)
             ->limit(20)
             ->get()
             ->map(function ($user) {
