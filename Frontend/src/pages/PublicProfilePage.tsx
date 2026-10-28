@@ -12,6 +12,7 @@ import {
   Loader2,
   X,
   ExternalLink,
+  Crown,
 } from 'lucide-react';
 
 import { authService } from '../services/authService';
@@ -398,58 +399,124 @@ export default function PublicProfilePage() {
         </div>
       </section>
 
-      {/* ================= FAVORITE GAMES SHOWCASE ================= */}
-      <section className="rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6 sm:p-8 backdrop-blur-md shadow-xl">
-        <div className="mb-6 flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-amber-400" />
-          <h2 className="text-xl font-bold text-white">Showcase Game Favorit</h2>
-          {showcaseGames.length > 0 && (
-            <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-300">
-              {showcaseGames.length}/4 Disematkan
-            </span>
-          )}
+      {/* ================= FAVORITE GAMES SHOWCASE — HALL OF FAME ================= */}
+      <section className="relative overflow-hidden rounded-3xl border border-amber-500/25 bg-gradient-to-b from-slate-900/95 via-slate-900/80 to-slate-950/90 p-6 sm:p-8 backdrop-blur-xl shadow-2xl shadow-black/40">
+        {/* Ambient backlight glow */}
+        <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-amber-500/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl" />
+
+        {/* Header */}
+        <div className="relative mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-400/20 to-amber-600/10 shadow-lg shadow-amber-500/10">
+              <Trophy className="h-5 w-5 text-amber-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+                  Hall of Fame
+                </h2>
+                {showcaseGames.length > 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-300">
+                    <Sparkles className="h-3 w-3 text-amber-400" />
+                    {showcaseGames.length}/4 Terisi
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-slate-400">
+                Koleksi game terbaik yang disematkan oleh {profile.user.name}.
+              </p>
+            </div>
+          </div>
         </div>
 
         {showcaseGames.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 bg-slate-950/40 p-8 text-center">
-            <Gamepad2 className="h-8 w-8 text-slate-600 mb-2" />
-            <p className="text-sm font-semibold text-slate-400">Belum ada game favorit yang disematkan</p>
-            <p className="mt-1 text-xs text-slate-500">
-              Pengguna ini belum memilih game untuk ditampilkan di showcase profilnya.
+          <div className="relative flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 bg-slate-950/50 p-10 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/80 text-amber-400/60 mb-3 shadow-inner">
+              <Trophy className="h-7 w-7 text-amber-400/70" />
+            </div>
+            <p className="text-sm font-bold text-slate-300">Rak Trophy Belum Terisi</p>
+            <p className="mt-1 text-xs text-slate-500 max-w-sm">
+              {profile.user.name} belum memilih game untuk disematkan di Hall of Fame profilnya.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {showcaseGames.map((game) => (
-              <div
-                key={game.id}
-                className="group relative flex flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-950/80 transition-all hover:-translate-y-1 hover:border-slate-700 shadow-md"
-              >
-                <Link to={`/game/${game.id}`} className="relative block aspect-[3/4] w-full overflow-hidden">
-                  {game.cover_url ? (
-                    <img
-                      src={game.cover_url}
-                      alt={game.name}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-slate-900 text-slate-600">
-                      <Gamepad2 className="h-6 w-6" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                </Link>
-                <div className="p-3">
-                  <Link
-                    to={`/game/${game.id}`}
-                    className="line-clamp-1 text-xs font-bold text-white hover:text-indigo-400 transition-colors"
+          <div className="relative grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-5">
+            {[0, 1, 2, 3].map((slotIndex) => {
+              const game = showcaseGames[slotIndex];
+              const rankNumber = slotIndex + 1;
+
+              if (game) {
+                const isTopPick = slotIndex === 0;
+                return (
+                  <div
+                    key={game.id}
+                    className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-800/90 bg-slate-950/90 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-amber-500/50 hover:shadow-2xl hover:shadow-amber-500/10"
                   >
-                    {game.name}
-                  </Link>
-                  <p className="text-[10px] text-slate-400 mt-0.5">{game.release_year ?? 'TBA'}</p>
+                    <Link to={`/game/${game.id}`} className="relative block aspect-[3/4] w-full overflow-hidden bg-slate-900">
+                      {game.cover_url ? (
+                        <img
+                          src={game.cover_url}
+                          alt={game.name}
+                          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-slate-900 text-slate-600">
+                          <Gamepad2 className="h-8 w-8" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-90" />
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent opacity-60" />
+
+                      {/* Rank Badge */}
+                      <div className="absolute top-2.5 left-2.5 z-10">
+                        {isTopPick ? (
+                          <div className="flex items-center gap-1 rounded-lg border border-amber-300/40 bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-500 px-2 py-0.5 text-[10px] font-black tracking-wider text-slate-950 shadow-md shadow-amber-500/40">
+                            <Crown className="h-3 w-3 fill-slate-950" />
+                            <span>#1 TOP PICK</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 rounded-lg border border-white/15 bg-slate-950/80 px-2 py-0.5 text-[10px] font-bold text-amber-200 backdrop-blur-md shadow">
+                            <Trophy className="h-3 w-3 text-amber-400" />
+                            <span>#{rankNumber}</span>
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+
+                    <div className="p-3 bg-slate-950/90">
+                      <Link
+                        to={`/game/${game.id}`}
+                        className="line-clamp-1 text-xs font-extrabold text-white hover:text-amber-300 transition-colors"
+                        title={game.name}
+                      >
+                        {game.name}
+                      </Link>
+                      <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400">
+                        <span>{game.release_year ?? 'TBA'}</span>
+                        <span className="rounded bg-slate-800/80 px-1.5 py-0.5 text-[9px] font-medium text-slate-300">
+                          Slot #{rankNumber}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Empty pedestal for balanced 4-slot shelf
+              return (
+                <div
+                  key={`empty-${slotIndex}`}
+                  className="relative flex aspect-[3/4] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800/60 bg-slate-950/30 p-4 text-center opacity-60"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-800/60 bg-slate-900/50 text-slate-600 mb-2">
+                    <Trophy className="h-5 w-5 text-slate-700" />
+                  </div>
+                  <span className="text-[11px] font-semibold text-slate-500">Slot #{rankNumber}</span>
+                  <span className="text-[9px] text-slate-600">Belum Disematkan</span>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

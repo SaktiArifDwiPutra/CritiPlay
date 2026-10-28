@@ -13,6 +13,11 @@ import {
   Camera,
   X,
   ExternalLink,
+  Crown,
+  Star,
+  Trash2,
+  Search,
+  Check,
 } from 'lucide-react';
 import { authService } from '../services/authService';
 import { userService } from '../services/userService';
@@ -111,6 +116,7 @@ export default function ProfilePage() {
   const [isFavModalOpen, setIsFavModalOpen] = useState(false);
   const [allLibraryGames, setAllLibraryGames] = useState<LibraryGame[]>([]);
   const [isLibraryLoading, setIsLibraryLoading] = useState(false);
+  const [favSearchQuery, setFavSearchQuery] = useState('');
 
   useEffect(() => {
     let isMounted = true;
@@ -531,77 +537,163 @@ export default function ProfilePage() {
       {/* ================= TAB 1: OVERVIEW ================= */}
       {activeTab === 'overview' && (
         <div className="space-y-8">
-          {/* 1. FAVORITE GAMES SHOWCASE */}
-          <section className="rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6 sm:p-8 backdrop-blur-md shadow-sm">
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-white">Showcase Game Favorit</h2>
-                  <span className="rounded-full border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-[11px] font-semibold text-purple-300">
-                    {favoriteGames.length}/4 Disematkan
-                  </span>
+          {/* 1. FAVORITE GAMES SHOWCASE — HALL OF FAME */}
+          <section className="relative overflow-hidden rounded-3xl border border-amber-500/25 bg-gradient-to-b from-slate-900/95 via-slate-900/80 to-slate-950/90 p-6 sm:p-8 backdrop-blur-xl shadow-2xl shadow-black/40">
+            {/* Ambient backlight glow */}
+            <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-amber-500/15 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl" />
+
+            {/* Header */}
+            <div className="relative mb-6 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-400/20 to-amber-600/10 shadow-lg shadow-amber-500/10">
+                  <Trophy className="h-5 w-5 text-amber-400" />
                 </div>
-                <p className="mt-0.5 text-xs text-slate-400">
-                  Game-game terbaik yang kamu pilih untuk dipamerkan di profilmu.
-                </p>
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
+                      Hall of Fame
+                    </h2>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-300">
+                      <Sparkles className="h-3 w-3 text-amber-400" />
+                      {favoriteGames.length}/4 Terisi
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Empat karya game terbaik pilihanmu yang mendefinisikan selera bermainmu.
+                  </p>
+                </div>
               </div>
 
               <button
                 type="button"
                 onClick={handleOpenFavModal}
-                className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3.5 py-1.5 text-xs font-semibold text-slate-200 shadow-sm transition-all hover:scale-105 hover:border-indigo-400 hover:bg-slate-800 hover:text-white active:scale-95"
+                className="group flex items-center gap-2 rounded-xl border border-amber-500/30 bg-slate-800/90 px-4 py-2 text-xs font-bold text-amber-200 shadow-md transition-all hover:scale-105 hover:border-amber-400 hover:bg-amber-500/10 hover:text-white active:scale-95"
               >
-                <Plus className="h-3.5 w-3.5 text-indigo-400" />
-                <span>Pilih Game Favorit</span>
+                <Sparkles className="h-3.5 w-3.5 text-amber-400 transition-transform group-hover:rotate-12" />
+                <span>Atur Showcase</span>
               </button>
             </div>
 
-            {favoriteGames.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 bg-slate-950/40 p-8 text-center">
-                <Gamepad2 className="mb-2 h-8 w-8 text-slate-600" />
-                <p className="text-sm font-semibold text-slate-300">Belum ada game favorit yang disematkan</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  Klik "Pilih Game Favorit" untuk memilih hingga 4 game terbaik dari koleksi library kamu.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                {favoriteGames.map((game) => (
-                  <div
-                    key={game.id}
-                    className="group relative flex flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-950/80 transition-all hover:-translate-y-1 hover:border-slate-700 shadow-md"
-                  >
-                    <Link to={`/game/${game.id}`} className="relative block aspect-[3/4] w-full overflow-hidden">
-                      {game.cover_url ? (
-                        <img
-                          src={game.cover_url}
-                          alt={game.name}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-slate-900 text-slate-600">
-                          <Gamepad2 className="h-6 w-6" />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                      <div className="absolute top-2 right-2 rounded-md border border-amber-500/20 bg-slate-950/80 px-1.5 py-0.5 text-[10px] font-bold text-amber-400 backdrop-blur-md">
-                        ★ {game.user_review?.rating_overall?.toFixed(1) || 'Fav'}
-                      </div>
-                    </Link>
+            {/* 4-Slot Trophy Shelf Grid */}
+            <div className="relative grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-5">
+              {[0, 1, 2, 3].map((slotIndex) => {
+                const game = favoriteGames[slotIndex];
+                const rankNumber = slotIndex + 1;
 
-                    <div className="p-3">
-                      <Link
-                        to={`/game/${game.id}`}
-                        className="line-clamp-1 text-xs font-bold text-white hover:text-indigo-400 transition-colors"
-                      >
-                        {game.name}
-                      </Link>
-                      <p className="text-[10px] text-slate-400 mt-0.5">{game.release_year ?? 'TBA'}</p>
+                if (game) {
+                  const isTopPick = slotIndex === 0;
+                  return (
+                    <div
+                      key={game.id}
+                      className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-800/90 bg-slate-950/90 shadow-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-amber-500/50 hover:shadow-2xl hover:shadow-amber-500/10"
+                    >
+                      {/* Cover Poster */}
+                      <div className="relative block aspect-[3/4] w-full overflow-hidden bg-slate-900">
+                        {game.cover_url ? (
+                          <img
+                            src={game.cover_url}
+                            alt={game.name}
+                            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-slate-900 text-slate-600">
+                            <Gamepad2 className="h-8 w-8" />
+                          </div>
+                        )}
+
+                        {/* Glossy gradient overlays */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-90" />
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent opacity-60" />
+
+                        {/* Rank Badge (Top Left) */}
+                        <div className="absolute top-2.5 left-2.5 z-10">
+                          {isTopPick ? (
+                            <div className="flex items-center gap-1 rounded-lg border border-amber-300/40 bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-500 px-2 py-0.5 text-[10px] font-black tracking-wider text-slate-950 shadow-md shadow-amber-500/40">
+                              <Crown className="h-3 w-3 fill-slate-950" />
+                              <span>#1 TOP PICK</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1 rounded-lg border border-white/15 bg-slate-950/80 px-2 py-0.5 text-[10px] font-bold text-amber-200 backdrop-blur-md shadow">
+                              <Trophy className="h-3 w-3 text-amber-400" />
+                              <span>#{rankNumber}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Rating Badge (Top Right) */}
+                        {game.user_review?.rating_overall ? (
+                          <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1 rounded-lg border border-amber-500/30 bg-slate-950/80 px-2 py-0.5 text-[10px] font-bold text-amber-300 backdrop-blur-md shadow">
+                            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                            <span>{game.user_review.rating_overall.toFixed(1)}</span>
+                          </div>
+                        ) : (
+                          <div className="absolute top-2.5 right-2.5 z-10 rounded-lg border border-slate-700/60 bg-slate-950/70 px-1.5 py-0.5 text-[9px] font-semibold text-slate-300 backdrop-blur-md">
+                            Favorite
+                          </div>
+                        )}
+
+                        {/* Quick Action Overlay on hover */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-slate-950/80 p-3 opacity-0 backdrop-blur-xs transition-opacity duration-200 group-hover:opacity-100">
+                          <Link
+                            to={`/game/${game.id}`}
+                            className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow hover:bg-indigo-500"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            <span>Detail Game</span>
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => toggleFavoriteGame(game)}
+                            className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-bold text-rose-300 hover:bg-rose-500 hover:text-white"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            <span>Lepas dari Slot</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Card Info Footer */}
+                      <div className="p-3 bg-slate-950/90">
+                        <Link
+                          to={`/game/${game.id}`}
+                          className="line-clamp-1 text-xs font-extrabold text-white hover:text-amber-300 transition-colors"
+                          title={game.name}
+                        >
+                          {game.name}
+                        </Link>
+                        <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400">
+                          <span>{game.release_year ?? 'TBA'}</span>
+                          <span className="rounded bg-slate-800/80 px-1.5 py-0.5 text-[9px] font-medium text-slate-300">
+                            Slot #{rankNumber}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  );
+                }
+
+                // Empty Slot
+                return (
+                  <button
+                    key={`empty-${slotIndex}`}
+                    type="button"
+                    onClick={handleOpenFavModal}
+                    className="group relative flex aspect-[3/4] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-800 bg-slate-950/40 p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:border-amber-500/50 hover:bg-slate-900/40 hover:shadow-xl hover:shadow-amber-500/5 active:scale-95"
+                  >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900 text-slate-500 transition-all duration-300 group-hover:scale-110 group-hover:border-amber-500/40 group-hover:bg-amber-500/10 group-hover:text-amber-400">
+                      <Plus className="h-6 w-6" />
+                    </div>
+                    <span className="mt-3 text-xs font-bold text-slate-400 group-hover:text-amber-300 transition-colors">
+                      + Isi Slot #{rankNumber}
+                    </span>
+                    <span className="mt-0.5 text-[10px] text-slate-500">
+                      {slotIndex === 0 ? 'Top Pick Utama' : 'Pilih dari Library'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </section>
 
           {/* 2. LIBRARY SUMMARY & STATS */}
@@ -1061,93 +1153,209 @@ export default function ProfilePage() {
       {/* ================= FAVORITE GAMES SELECTION MODAL ================= */}
       {isFavModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md overflow-y-auto"
           onClick={() => setIsFavModalOpen(false)}
         >
           <div
-            className="w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl"
+            className="w-full max-w-2xl rounded-3xl border border-amber-500/30 bg-slate-900/95 p-6 shadow-2xl shadow-black/60 backdrop-blur-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-4 mb-4">
-              <div>
-                <h3 className="text-lg font-bold text-white">Pilih Game Favorit</h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Pilih hingga 4 game dari library kamu untuk dipamerkan ({favoriteGames.length}/4)
-                </p>
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-400">
+                  <Trophy className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-extrabold text-white">Kelola Hall of Fame</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Pilih hingga 4 game terbaik dari library kamu ({favoriteGames.length}/4 Terisi)
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsFavModalOpen(false)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+                className="rounded-xl border border-slate-800 bg-slate-950 p-1.5 text-slate-400 hover:border-slate-700 hover:text-white transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
+            {/* Live 4-Slot Preview Strip */}
+            <div className="mb-5 rounded-2xl border border-slate-800 bg-slate-950/60 p-3.5">
+              <div className="mb-2.5 flex items-center justify-between text-[11px] font-bold text-slate-400">
+                <span className="flex items-center gap-1.5 text-amber-300">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                  Pratinjau Rak Showcase
+                </span>
+                <span>{favoriteGames.length} dari 4 slot aktif</span>
+              </div>
+              <div className="grid grid-cols-4 gap-2.5">
+                {[0, 1, 2, 3].map((slotIdx) => {
+                  const g = favoriteGames[slotIdx];
+                  const rank = slotIdx + 1;
+                  if (g) {
+                    return (
+                      <div
+                        key={g.id}
+                        className="group relative flex flex-col overflow-hidden rounded-xl border border-amber-500/40 bg-slate-900 shadow-md"
+                      >
+                        <div className="relative aspect-[3/4] w-full overflow-hidden bg-slate-950">
+                          {g.cover_url ? (
+                            <img src={g.cover_url} alt={g.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[9px] text-slate-500">
+                              No Cover
+                            </div>
+                          )}
+                          <div className="absolute top-1 left-1 rounded bg-black/80 px-1 py-0.2 text-[8px] font-black text-amber-400">
+                            #{rank}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => toggleFavoriteGame(g)}
+                            className="absolute top-1 right-1 rounded-full bg-rose-600/90 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-rose-500"
+                            title="Lepas dari showcase"
+                          >
+                            <X className="h-2.5 w-2.5" />
+                          </button>
+                        </div>
+                        <p className="truncate p-1.5 text-[10px] font-bold text-white text-center">
+                          {g.name}
+                        </p>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div
+                      key={`preview-empty-${slotIdx}`}
+                      className="flex aspect-[3/4] flex-col items-center justify-center rounded-xl border border-dashed border-slate-800 bg-slate-950/40 text-center p-2"
+                    >
+                      <span className="text-[10px] font-bold text-slate-500">Slot #{rank}</span>
+                      <span className="text-[9px] text-slate-600">Kosong</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Search filter inside modal */}
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+              <input
+                type="text"
+                placeholder="Cari game dari library kamu..."
+                value={favSearchQuery}
+                onChange={(e) => setFavSearchQuery(e.target.value)}
+                className="w-full rounded-xl border border-slate-800 bg-slate-950 py-2 pl-9 pr-4 text-xs text-white placeholder-slate-500 focus:border-amber-500/50 focus:outline-none"
+              />
+              {favSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setFavSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Library list */}
             {isLibraryLoading ? (
               <div className="py-12 text-center text-slate-400">
-                <Loader2 className="mx-auto h-6 w-6 animate-spin text-indigo-500 mb-2" />
+                <Loader2 className="mx-auto h-6 w-6 animate-spin text-amber-400 mb-2" />
                 <span className="text-xs">Memuat daftar game dari Library...</span>
               </div>
             ) : allLibraryGames.length === 0 ? (
               <div className="py-12 text-center text-slate-500">
                 <p className="text-sm">Library kamu masih kosong.</p>
-                <Link to="/" className="text-xs text-indigo-400 hover:underline mt-2 inline-block">
+                <Link to="/" className="text-xs text-amber-400 hover:underline mt-2 inline-block">
                   Jelajahi game dan tambahkan ke koleksi
                 </Link>
               </div>
             ) : (
-              <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
-                {allLibraryGames.map((game) => {
-                  const isFav = favoriteGames.some((g) => g.id === game.id);
-                  return (
-                    <div
-                      key={game.id}
-                      onClick={() => toggleFavoriteGame(game)}
-                      className={`flex items-center gap-3 rounded-xl border p-2.5 cursor-pointer transition-all ${
-                        isFav
-                          ? 'border-indigo-500 bg-indigo-600/20 text-white ring-1 ring-indigo-500/30'
-                          : 'border-slate-800/80 bg-slate-950/40 text-slate-300 hover:border-slate-700 hover:bg-slate-800/40'
-                      }`}
-                    >
-                      <div className="h-12 w-9 shrink-0 overflow-hidden rounded bg-slate-800">
-                        {game.cover_url ? (
-                          <img src={game.cover_url} alt={game.name} className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-[8px] text-slate-500">
-                            No Cover
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-bold text-white">{game.name}</p>
-                        <p className="text-[10px] text-slate-400">{game.release_year ?? 'TBA'}</p>
-                      </div>
-
-                      <button
-                        type="button"
-                        className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+              <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
+                {allLibraryGames
+                  .filter((g) => g.name.toLowerCase().includes(favSearchQuery.toLowerCase()))
+                  .map((game) => {
+                    const isFav = favoriteGames.some((g) => g.id === game.id);
+                    const favIndex = favoriteGames.findIndex((g) => g.id === game.id);
+                    return (
+                      <div
+                        key={game.id}
+                        onClick={() => toggleFavoriteGame(game)}
+                        className={`flex items-center gap-3 rounded-xl border p-2.5 cursor-pointer transition-all ${
                           isFav
-                            ? 'bg-indigo-600 text-white'
-                            : 'border border-slate-700 bg-slate-800 text-slate-400 hover:text-white'
+                            ? 'border-amber-500/60 bg-amber-500/10 text-white ring-1 ring-amber-500/20'
+                            : 'border-slate-800/80 bg-slate-950/40 text-slate-300 hover:border-slate-700 hover:bg-slate-800/40'
                         }`}
                       >
-                        {isFav ? 'Terpilih' : '+ Pilih'}
-                      </button>
-                    </div>
-                  );
-                })}
+                        <div className="relative h-12 w-9 shrink-0 overflow-hidden rounded-lg bg-slate-800 shadow">
+                          {game.cover_url ? (
+                            <img src={game.cover_url} alt={game.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[8px] text-slate-500">
+                              No Cover
+                            </div>
+                          )}
+                          {isFav && (
+                            <div className="absolute top-0.5 left-0.5 rounded bg-amber-400 px-1 py-0.2 text-[8px] font-black text-slate-950">
+                              #{favIndex + 1}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-xs font-bold text-white">{game.name}</p>
+                          <div className="mt-0.5 flex items-center gap-2 text-[10px] text-slate-400">
+                            <span>{game.release_year ?? 'TBA'}</span>
+                            {game.user_review?.rating_overall && (
+                              <span className="flex items-center gap-0.5 text-amber-400 font-bold">
+                                <Star className="h-2.5 w-2.5 fill-amber-400" />
+                                {game.user_review.rating_overall.toFixed(1)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                            isFav
+                              ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20'
+                              : 'border border-slate-700 bg-slate-800 text-slate-300 hover:text-white hover:border-slate-600'
+                          }`}
+                        >
+                          {isFav ? (
+                            <>
+                              <Check className="h-3 w-3 stroke-[3]" />
+                              <span>Slot #{favIndex + 1}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="h-3 w-3" />
+                              <span>Pilih</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })}
               </div>
             )}
 
-            <div className="mt-5 flex justify-end border-t border-slate-800/80 pt-3">
+            {/* Modal Footer */}
+            <div className="mt-5 flex items-center justify-between border-t border-slate-800/80 pt-4">
+              <span className="text-xs text-slate-400">
+                Maksimal 4 game favorit yang bisa disematkan.
+              </span>
               <button
                 type="button"
                 onClick={() => setIsFavModalOpen(false)}
-                className="rounded-xl bg-indigo-600 px-5 py-2 text-xs font-bold text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-500 transition-colors"
+                className="rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 px-6 py-2 text-xs font-extrabold text-slate-950 shadow-lg shadow-amber-500/20 hover:from-amber-300 hover:to-amber-400 transition-all active:scale-95"
               >
-                Selesai
+                Simpan & Selesai
               </button>
             </div>
           </div>
